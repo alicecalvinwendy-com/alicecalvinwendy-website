@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mardi Gras 2026 - Throws Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Loading Mardi Gras data...</p>
+    </div>
+
+    <header class="hero">
+        <h1>🎭 Mardi Gras 2026 Throws Tracker</h1>
+        <p class="subtitle">Interactive infographic of all the throws we caught!</p>
+    </header>
+
+    <main id="app" style="display: none;">
+        <!-- Parade Summary Grid -->
+        <section class="parade-summary">
+            <h2>Parades Attended</h2>
+            <div class="parade-grid" id="paradeGrid"></div>
+        </section>
+
+        <!-- Overall Statistics -->
+        <section class="statistics">
+            <h2>Overall Statistics</h2>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon">📿</div>
+                    <div class="stat-value" id="totalBeadsCount">0</div>
+                    <div class="stat-label">Total Beads</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚖️</div>
+                    <div class="stat-value" id="totalBeadsWeight">0g</div>
+                    <div class="stat-label">Total Weight</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🪙</div>
+                    <div class="stat-value" id="totalDoubloons">0</div>
+                    <div class="stat-label">Doubloons</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎁</div>
+                    <div class="stat-value" id="totalItems">0</div>
+                    <div class="stat-label">Throw Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🧸</div>
+                    <div class="stat-value" id="totalStuffedAnimals">0</div>
+                    <div class="stat-label">Stuffed Animals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value" id="totalSpecials">0</div>
+                    <div class="stat-label">Special Items</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="filters">
+            <div class="filter-group">
+                <label for="paradeFilter">
+                    <span class="filter-icon">🎪</span>
+                    Filter by Parade:
+                </label>
+                <select id="paradeFilter" class="filter-select">
+                    <option value="all">All Parades</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Beads Section -->
+        <section class="beads-section">
+            <h2>Beads Analysis</h2>
+            <div class="filter-group bead-filter">
+                <label for="beadColorFilter">
+                    <span class="filter-icon">🎨</span>
+                    Filter by Color:
+                </label>
+                <select id="beadColorFilter" class="filter-select">
+                    <option value="all">All Colors</option>
+                </select>
+            </div>
+            
+            <div class="charts-grid beads-grid">
+                <div class="chart-container">
+                    <h3>Bead Count by Color</h3>
+                    <canvas id="beadCountChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Bead Weight by Color (grams)</h3>
+                    <canvas id="beadWeightChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Bead Distribution (%)</h3>
+                    <canvas id="beadPercentageChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Bead Types by Parade</h3>
+                    <canvas id="beadTypesByParadeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Throws Section -->
+        <section class="throws-section">
+            <h2>Throws & Items</h2>
+            <div class="charts-grid throws-grid">
+                <div class="chart-container">
+                    <h3>Items Distribution</h3>
+                    <canvas id="itemsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Stuffed Animals by Type</h3>
+                    <canvas id="stuffedAnimalsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Special Items -->
+        <section class="specials-section">
+            <h2>Special Items</h2>
+            <p class="section-description">Rare, hand-decorated throws from specific parades</p>
+            <div class="chart-container chart-wide">
+                <canvas id="specialsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Doubloons -->
+        <section class="doubloons-section">
+            <h2>Doubloons by Parade</h2>
+            <div class="chart-container chart-wide">
+                <canvas id="doubloonsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Parade Comparison (only shown when All Parades selected) -->
+        <section class="comparison-section" id="comparisonSection">
+            <h2>Parade Comparison</h2>
+            <div class="charts-grid comparison-grid">
+                <div class="chart-container">
+                    <h3>Total Items by Parade</h3>
+                    <canvas id="paradeItemsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Total Bead Weight by Parade (grams)</h3>
+                    <canvas id="paradeWeightChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Tables -->
+        <section class="tables-section">
+            <h2>Detailed Breakdown</h2>
+            
+            <div class="table-container">
+                <h3>Beads by Color & Parade</h3>
+                <div class="table-scroll">
+                    <table id="beadsTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="color">Color</th>
+                                <th class="sortable" data-sort="count">Count</th>
+                                <th class="sortable" data-sort="weight">Weight (g)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3>Throws by Item & Parade</h3>
+                <div class="table-scroll">
+                    <table id="throwsTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="item">Item</th>
+                                <th class="sortable" data-sort="count">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Laissez les bons temps rouler! 🎉</p>
+    </footer>
+
+    <!-- Load data first, then the app -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

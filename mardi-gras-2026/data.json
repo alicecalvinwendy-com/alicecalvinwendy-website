@@ -28,7 +28,6 @@
             "time": "5:30 PM",
             "logo": "logos/knights-of-babylon.png"
         },
-    
         {
             "name": "Krewe of Muses", 
             "shortName": "muses",
@@ -85,7 +84,6 @@
             "time": "11:45 AM",
             "logo": "logos/krewe-of-mid-city.jpg"
         },
-    
         {
             "name": "Krewe of Thoth", 
             "shortName": "thoth",
@@ -113,1322 +111,397 @@
             "date": "Mon Feb 16 2026",
             "time": "6:00 PM",
             "logo": "logos/krewe-of-orpheus.png"
-        },
-
-    
+        }
     ],
-        
     "beads": {
-        "black": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
-        },
-        "orange": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
-        },
-        "glass": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
-        },
-        "red": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
-        },
-        "white": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
-        },
-        "blue": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
-        },
-        "pink": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
-        },
-        "silver": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
+        "purple": {
+            "generic": {"weight": 125, "count": 8},
+            "druids": {"weight": 234, "count": 12},
+            "alla": {"weight": 187, "count": 10},
+            "chaos": {"weight": 298, "count": 15},
+            "babylon": {"weight": 312, "count": 16},
+            "muses": {"weight": 445, "count": 23},
+            "hermes": {"weight": 389, "count": 20},
+            "detat": {"weight": 267, "count": 14},
+            "morpheus": {"weight": 334, "count": 17},
+            "iris": {"weight": 456, "count": 24},
+            "tucks": {"weight": 423, "count": 22},
+            "okeanos": {"weight": 378, "count": 19},
+            "midcity": {"weight": 345, "count": 18},
+            "thoth": {"weight": 512, "count": 27},
+            "bacchus": {"weight": 687, "count": 36},
+            "proteus": {"weight": 534, "count": 28},
+            "orpheus": {"weight": 623, "count": 33}
         },
         "green": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
-        },
-        "purple": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
+            "generic": {"weight": 98, "count": 6},
+            "druids": {"weight": 198, "count": 10},
+            "alla": {"weight": 167, "count": 9},
+            "chaos": {"weight": 276, "count": 14},
+            "babylon": {"weight": 289, "count": 15},
+            "muses": {"weight": 412, "count": 21},
+            "hermes": {"weight": 356, "count": 18},
+            "detat": {"weight": 245, "count": 13},
+            "morpheus": {"weight": 312, "count": 16},
+            "iris": {"weight": 423, "count": 22},
+            "tucks": {"weight": 389, "count": 20},
+            "okeanos": {"weight": 345, "count": 18},
+            "midcity": {"weight": 312, "count": 16},
+            "thoth": {"weight": 478, "count": 25},
+            "bacchus": {"weight": 645, "count": 34},
+            "proteus": {"weight": 498, "count": 26},
+            "orpheus": {"weight": 589, "count": 31}
         },
         "gold": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
+            "generic": {"weight": 112, "count": 7},
+            "druids": {"weight": 212, "count": 11},
+            "alla": {"weight": 178, "count": 9},
+            "chaos": {"weight": 287, "count": 15},
+            "babylon": {"weight": 301, "count": 16},
+            "muses": {"weight": 434, "count": 22},
+            "hermes": {"weight": 378, "count": 19},
+            "detat": {"weight": 256, "count": 13},
+            "morpheus": {"weight": 323, "count": 17},
+            "iris": {"weight": 445, "count": 23},
+            "tucks": {"weight": 401, "count": 21},
+            "okeanos": {"weight": 367, "count": 19},
+            "midcity": {"weight": 334, "count": 17},
+            "thoth": {"weight": 501, "count": 26},
+            "bacchus": {"weight": 668, "count": 35},
+            "proteus": {"weight": 523, "count": 27},
+            "orpheus": {"weight": 612, "count": 32}
+        },
+        "red": {
+            "generic": {"weight": 67, "count": 4},
+            "druids": {"weight": 134, "count": 7},
+            "alla": {"weight": 112, "count": 6},
+            "chaos": {"weight": 189, "count": 10},
+            "babylon": {"weight": 167, "count": 9},
+            "muses": {"weight": 245, "count": 13},
+            "hermes": {"weight": 223, "count": 12},
+            "detat": {"weight": 156, "count": 8},
+            "morpheus": {"weight": 198, "count": 10},
+            "iris": {"weight": 267, "count": 14},
+            "tucks": {"weight": 234, "count": 12},
+            "okeanos": {"weight": 212, "count": 11},
+            "midcity": {"weight": 189, "count": 10},
+            "thoth": {"weight": 289, "count": 15},
+            "bacchus": {"weight": 389, "count": 20},
+            "proteus": {"weight": 312, "count": 16},
+            "orpheus": {"weight": 356, "count": 18}
+        },
+        "blue": {
+            "generic": {"weight": 89, "count": 5},
+            "druids": {"weight": 167, "count": 9},
+            "alla": {"weight": 145, "count": 8},
+            "chaos": {"weight": 234, "count": 12},
+            "babylon": {"weight": 212, "count": 11},
+            "muses": {"weight": 312, "count": 16},
+            "hermes": {"weight": 278, "count": 14},
+            "detat": {"weight": 198, "count": 10},
+            "morpheus": {"weight": 245, "count": 13},
+            "iris": {"weight": 334, "count": 17},
+            "tucks": {"weight": 298, "count": 15},
+            "okeanos": {"weight": 267, "count": 14},
+            "midcity": {"weight": 234, "count": 12},
+            "thoth": {"weight": 356, "count": 18},
+            "bacchus": {"weight": 478, "count": 25},
+            "proteus": {"weight": 389, "count": 20},
+            "orpheus": {"weight": 445, "count": 23}
+        },
+        "pink": {
+            "generic": {"weight": 56, "count": 3},
+            "druids": {"weight": 112, "count": 6},
+            "alla": {"weight": 98, "count": 5},
+            "chaos": {"weight": 156, "count": 8},
+            "babylon": {"weight": 134, "count": 7},
+            "muses": {"weight": 223, "count": 12},
+            "hermes": {"weight": 189, "count": 10},
+            "detat": {"weight": 134, "count": 7},
+            "morpheus": {"weight": 167, "count": 9},
+            "iris": {"weight": 245, "count": 13},
+            "tucks": {"weight": 212, "count": 11},
+            "okeanos": {"weight": 189, "count": 10},
+            "midcity": {"weight": 167, "count": 9},
+            "thoth": {"weight": 256, "count": 13},
+            "bacchus": {"weight": 345, "count": 18},
+            "proteus": {"weight": 278, "count": 14},
+            "orpheus": {"weight": 312, "count": 16}
+        },
+        "white": {
+            "generic": {"weight": 78, "count": 4},
+            "druids": {"weight": 145, "count": 8},
+            "alla": {"weight": 123, "count": 6},
+            "chaos": {"weight": 198, "count": 10},
+            "babylon": {"weight": 178, "count": 9},
+            "muses": {"weight": 267, "count": 14},
+            "hermes": {"weight": 234, "count": 12},
+            "detat": {"weight": 167, "count": 9},
+            "morpheus": {"weight": 212, "count": 11},
+            "iris": {"weight": 289, "count": 15},
+            "tucks": {"weight": 256, "count": 13},
+            "okeanos": {"weight": 234, "count": 12},
+            "midcity": {"weight": 212, "count": 11},
+            "thoth": {"weight": 312, "count": 16},
+            "bacchus": {"weight": 423, "count": 22},
+            "proteus": {"weight": 334, "count": 17},
+            "orpheus": {"weight": 378, "count": 19}
+        },
+        "orange": {
+            "generic": {"weight": 45, "count": 2},
+            "druids": {"weight": 89, "count": 5},
+            "alla": {"weight": 78, "count": 4},
+            "chaos": {"weight": 123, "count": 6},
+            "babylon": {"weight": 112, "count": 6},
+            "muses": {"weight": 167, "count": 9},
+            "hermes": {"weight": 145, "count": 8},
+            "detat": {"weight": 98, "count": 5},
+            "morpheus": {"weight": 134, "count": 7},
+            "iris": {"weight": 178, "count": 9},
+            "tucks": {"weight": 156, "count": 8},
+            "okeanos": {"weight": 145, "count": 8},
+            "midcity": {"weight": 123, "count": 6},
+            "thoth": {"weight": 189, "count": 10},
+            "bacchus": {"weight": 256, "count": 13},
+            "proteus": {"weight": 212, "count": 11},
+            "orpheus": {"weight": 245, "count": 13}
+        },
+        "black": {
+            "generic": {"weight": 45, "count": 3},
+            "druids": {"weight": 92, "count": 5},
+            "alla": {"weight": 68, "count": 4},
+            "chaos": {"weight": 115, "count": 6},
+            "babylon": {"weight": 78, "count": 4},
+            "muses": {"weight": 156, "count": 8},
+            "hermes": {"weight": 134, "count": 7},
+            "detat": {"weight": 89, "count": 5},
+            "morpheus": {"weight": 112, "count": 6},
+            "iris": {"weight": 167, "count": 9},
+            "tucks": {"weight": 145, "count": 8},
+            "okeanos": {"weight": 123, "count": 7},
+            "midcity": {"weight": 98, "count": 5},
+            "thoth": {"weight": 189, "count": 10},
+            "bacchus": {"weight": 278, "count": 15},
+            "proteus": {"weight": 201, "count": 11},
+            "orpheus": {"weight": 245, "count": 13}
+        },
+        "silver": {
+            "generic": {"weight": 67, "count": 3},
+            "druids": {"weight": 123, "count": 6},
+            "alla": {"weight": 98, "count": 5},
+            "chaos": {"weight": 167, "count": 8},
+            "babylon": {"weight": 145, "count": 7},
+            "muses": {"weight": 234, "count": 11},
+            "hermes": {"weight": 198, "count": 10},
+            "detat": {"weight": 145, "count": 7},
+            "morpheus": {"weight": 178, "count": 9},
+            "iris": {"weight": 256, "count": 13},
+            "tucks": {"weight": 223, "count": 11},
+            "okeanos": {"weight": 198, "count": 10},
+            "midcity": {"weight": 178, "count": 9},
+            "thoth": {"weight": 267, "count": 13},
+            "bacchus": {"weight": 356, "count": 18},
+            "proteus": {"weight": 289, "count": 15},
+            "orpheus": {"weight": 334, "count": 17}
+        },
+        "glass": {
+            "generic": {"weight": 0, "count": 0},
+            "druids": {"weight": 0, "count": 0},
+            "alla": {"weight": 42, "count": 1},
+            "chaos": {"weight": 0, "count": 0},
+            "babylon": {"weight": 88, "count": 2},
+            "muses": {"weight": 134, "count": 3},
+            "hermes": {"weight": 46, "count": 1},
+            "detat": {"weight": 0, "count": 0},
+            "morpheus": {"weight": 92, "count": 2},
+            "iris": {"weight": 178, "count": 4},
+            "tucks": {"weight": 0, "count": 0},
+            "okeanos": {"weight": 46, "count": 1},
+            "midcity": {"weight": 0, "count": 0},
+            "thoth": {"weight": 92, "count": 2},
+            "bacchus": {"weight": 268, "count": 6},
+            "proteus": {"weight": 134, "count": 3},
+            "orpheus": {"weight": 224, "count": 5}
         },
         "lightup": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
+            "generic": {"weight": 0, "count": 0},
+            "druids": {"weight": 38, "count": 1},
+            "alla": {"weight": 0, "count": 0},
+            "chaos": {"weight": 76, "count": 2},
+            "babylon": {"weight": 42, "count": 1},
+            "muses": {"weight": 152, "count": 4},
+            "hermes": {"weight": 114, "count": 3},
+            "detat": {"weight": 38, "count": 1},
+            "morpheus": {"weight": 76, "count": 2},
+            "iris": {"weight": 152, "count": 4},
+            "tucks": {"weight": 190, "count": 5},
+            "okeanos": {"weight": 114, "count": 3},
+            "midcity": {"weight": 76, "count": 2},
+            "thoth": {"weight": 114, "count": 3},
+            "bacchus": {"weight": 304, "count": 8},
+            "proteus": {"weight": 152, "count": 4},
+            "orpheus": {"weight": 266, "count": 7}
         },
         "medallion": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
+            "generic": {"weight": 0, "count": 0},
+            "druids": {"weight": 0, "count": 0},
+            "alla": {"weight": 125, "count": 2},
+            "chaos": {"weight": 0, "count": 0},
+            "babylon": {"weight": 62, "count": 1},
+            "muses": {"weight": 250, "count": 4},
+            "hermes": {"weight": 187, "count": 3},
+            "detat": {"weight": 62, "count": 1},
+            "morpheus": {"weight": 125, "count": 2},
+            "iris": {"weight": 187, "count": 3},
+            "tucks": {"weight": 0, "count": 0},
+            "okeanos": {"weight": 125, "count": 2},
+            "midcity": {"weight": 62, "count": 1},
+            "thoth": {"weight": 187, "count": 3},
+            "bacchus": {"weight": 437, "count": 7},
+            "proteus": {"weight": 250, "count": 4},
+            "orpheus": {"weight": 375, "count": 6}
         },
         "special": {
-            "generic": {
-                "weight": 0,
-                "count": 0,
-            },
-            "druids": {
-                "weight": 0,
-                "count": 0,
-            },
-            "alla": {
-                "weight": 0,
-                "count": 0,
-            },
-            "chaos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "babylon": {
-                "weight": 0,
-                "count": 0,
-            },
-            "muses": {
-                "weight": 0,
-                "count": 0,
-            },
-            "hermes": {
-                "weight": 0,
-                "count": 0,
-            },
-            "detat": {
-                "weight": 0,
-                "count": 0,
-            },
-            "morpheus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "iris": {
-                "weight": 0,
-                "count": 0,
-            },
-            "tucks": {
-                "weight": 0,
-                "count": 0,
-            },
-            "okeanos": {
-                "weight": 0,
-                "count": 0,
-            },
-            "midcity": {
-                "weight": 0,
-                "count": 0,
-            },
-            "thoth": {
-                "weight": 0,
-                "count": 0,
-            },
-            "bacchus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "proteus": {
-                "weight": 0,
-                "count": 0,
-            },
-            "orpheus": {
-                "weight": 0,
-                "count": 0,
-            }
+            "generic": {"weight": 0, "count": 0},
+            "druids": {"weight": 0, "count": 0},
+            "alla": {"weight": 54, "count": 1},
+            "chaos": {"weight": 0, "count": 0},
+            "babylon": {"weight": 0, "count": 0},
+            "muses": {"weight": 162, "count": 3},
+            "hermes": {"weight": 108, "count": 2},
+            "detat": {"weight": 54, "count": 1},
+            "morpheus": {"weight": 0, "count": 0},
+            "iris": {"weight": 108, "count": 2},
+            "tucks": {"weight": 54, "count": 1},
+            "okeanos": {"weight": 54, "count": 1},
+            "midcity": {"weight": 0, "count": 0},
+            "thoth": {"weight": 54, "count": 1},
+            "bacchus": {"weight": 270, "count": 5},
+            "proteus": {"weight": 162, "count": 3},
+            "orpheus": {"weight": 216, "count": 4}
         }
     },
     "doubloons": {
-        "generic": {
-            "count": 0,
-        },
-        "druids": {
-            "count": 0,
-        },
-        "alla": {
-            "count": 0,
-        },
-        "chaos": {
-            "count": 0,
-        },
-        "babylon": {
-            "count": 0,
-        },
-        "muses": {
-            "count": 0,
-        },
-        "hermes": {
-            "count": 0,
-        },
-        "detat": {
-            "count": 0,
-        },
-        "morpheus": {
-            "count": 0,
-        },
-        "iris": {
-            "count": 0,
-        },
-        "tucks": {
-            "count": 0,
-        },
-        "okeanos": {
-            "count": 0,
-        },
-        "midcity": {
-            "count": 0,
-        },
-        "thoth": {
-            "count": 0,
-        },
-        "bacchus": {
-            "count": 0,
-        },
-        "proteus": {
-            "count": 0,
-        },
-        "orpheus": {
-            "count": 0,
-        }
+        "generic": {"count": 3},
+        "druids": {"count": 4},
+        "alla": {"count": 2},
+        "chaos": {"count": 5},
+        "babylon": {"count": 6},
+        "muses": {"count": 8},
+        "hermes": {"count": 7},
+        "detat": {"count": 3},
+        "morpheus": {"count": 4},
+        "iris": {"count": 7},
+        "tucks": {"count": 6},
+        "okeanos": {"count": 5},
+        "midcity": {"count": 4},
+        "thoth": {"count": 9},
+        "bacchus": {"count": 12},
+        "proteus": {"count": 8},
+        "orpheus": {"count": 11}
     },
     "throws": {
         "items": {
             "cups": {
-                "generic": {
-                    "count": 0,
-                },
-                "druids": {
-                    "count": 0,
-                },
-                "alla": {
-                    "count": 0,
-                },
-                "chaos": {
-                    "count": 0,
-                },
-                "babylon": {
-                    "count": 0,
-                },
-                "muses": {
-                    "count": 0,
-                },
-                "hermes": {
-                    "count": 0,
-                },
-                "detat": {
-                    "count": 0,
-                },
-                "morpheus": {
-                    "count": 0,
-                },
-                "iris": {
-                    "count": 0,
-                },
-                "tucks": {
-                    "count": 0,
-                },
-                "okeanos": {
-                    "count": 0,
-                },
-                "midcity": {
-                    "count": 0,
-                },
-                "thoth": {
-                    "count": 0,
-                },
-                "bacchus": {
-                    "count": 0,
-                },
-                "proteus": {
-                    "count": 0,
-                },
-                "orpheus": {
-                    "count": 0,
-                }
+                "generic": {"count": 2},
+                "druids": {"count": 3},
+                "alla": {"count": 4},
+                "chaos": {"count": 5},
+                "babylon": {"count": 6},
+                "muses": {"count": 9},
+                "hermes": {"count": 7},
+                "detat": {"count": 8},
+                "morpheus": {"count": 5},
+                "iris": {"count": 11},
+                "tucks": {"count": 13},
+                "okeanos": {"count": 8},
+                "midcity": {"count": 6},
+                "thoth": {"count": 10},
+                "bacchus": {"count": 18},
+                "proteus": {"count": 12},
+                "orpheus": {"count": 15}
             },
             "hats": {
-                "generic": {
-                    "count": 0,
-                },
-                "druids": {
-                    "count": 0,
-                },
-                "alla": {
-                    "count": 0,
-                },
-                "chaos": {
-                    "count": 0,
-                },
-                "babylon": {
-                    "count": 0,
-                },
-                "muses": {
-                    "count": 0,
-                },
-                "hermes": {
-                    "count": 0,
-                },
-                "detat": {
-                    "count": 0,
-                },
-                "morpheus": {
-                    "count": 0,
-                },
-                "iris": {
-                    "count": 0,
-                },
-                "tucks": {
-                    "count": 0,
-                },
-                "okeanos": {
-                    "count": 0,
-                },
-                "midcity": {
-                    "count": 0,
-                },
-                "thoth": {
-                    "count": 0,
-                },
-                "bacchus": {
-                    "count": 0,
-                },
-                "proteus": {
-                    "count": 0,
-                },
-                "orpheus": {
-                    "count": 0,
-                }
+                "generic": {"count": 0},
+                "druids": {"count": 1},
+                "alla": {"count": 0},
+                "chaos": {"count": 2},
+                "babylon": {"count": 1},
+                "muses": {"count": 3},
+                "hermes": {"count": 2},
+                "detat": {"count": 1},
+                "morpheus": {"count": 1},
+                "iris": {"count": 2},
+                "tucks": {"count": 4},
+                "okeanos": {"count": 2},
+                "midcity": {"count": 1},
+                "thoth": {"count": 3},
+                "bacchus": {"count": 5},
+                "proteus": {"count": 3},
+                "orpheus": {"count": 4}
             },
             "sunglasses": {
-                "generic": {
-                    "count": 0,
-                },
-                "druids": {
-                    "count": 0,
-                },
-                "alla": {
-                    "count": 0,
-                },
-                "chaos": {
-                    "count": 0,
-                },
-                "babylon": {
-                    "count": 0,
-                },
-                "muses": {
-                    "count": 0,
-                },
-                "hermes": {
-                    "count": 0,
-                },
-                "detat": {
-                    "count": 0,
-                },
-                "morpheus": {
-                    "count": 0,
-                },
-                "iris": {
-                    "count": 0,
-                },
-                "tucks": {
-                    "count": 0,
-                },
-                "okeanos": {
-                    "count": 0,
-                },
-                "midcity": {
-                    "count": 0,
-                },
-                "thoth": {
-                    "count": 0,
-                },
-                "bacchus": {
-                    "count": 0,
-                },
-                "proteus": {
-                    "count": 0,
-                },
-                "orpheus": {
-                    "count": 0,
-                }
+                "generic": {"count": 1},
+                "druids": {"count": 2},
+                "alla": {"count": 1},
+                "chaos": {"count": 3},
+                "babylon": {"count": 2},
+                "muses": {"count": 4},
+                "hermes": {"count": 3},
+                "detat": {"count": 2},
+                "morpheus": {"count": 3},
+                "iris": {"count": 6},
+                "tucks": {"count": 5},
+                "okeanos": {"count": 4},
+                "midcity": {"count": 3},
+                "thoth": {"count": 5},
+                "bacchus": {"count": 8},
+                "proteus": {"count": 5},
+                "orpheus": {"count": 7}
             },
             "balls": {
-                "generic": {
-                    "count": 0,
-                },
-                "druids": {
-                    "count": 0,
-                },
-                "alla": {
-                    "count": 0,
-                },
-                "chaos": {
-                    "count": 0,
-                },
-                "babylon": {
-                    "count": 0,
-                },
-                "muses": {
-                    "count": 0,
-                },
-                "hermes": {
-                    "count": 0,
-                },
-                "detat": {
-                    "count": 0,
-                },
-                "morpheus": {
-                    "count": 0,
-                },
-                "iris": {
-                    "count": 0,
-                },
-                "tucks": {
-                    "count": 0,
-                },
-                "okeanos": {
-                    "count": 0,
-                },
-                "midcity": {
-                    "count": 0,
-                },
-                "thoth": {
-                    "count": 0,
-                },
-                "bacchus": {
-                    "count": 0,
-                },
-                "proteus": {
-                    "count": 0,
-                },
-                "orpheus": {
-                    "count": 0,
-                }
-            },
+                "generic": {"count": 1},
+                "druids": {"count": 2},
+                "alla": {"count": 1},
+                "chaos": {"count": 3},
+                "babylon": {"count": 2},
+                "muses": {"count": 3},
+                "hermes": {"count": 4},
+                "detat": {"count": 2},
+                "morpheus": {"count": 3},
+                "iris": {"count": 4},
+                "tucks": {"count": 6},
+                "okeanos": {"count": 5},
+                "midcity": {"count": 4},
+                "thoth": {"count": 7},
+                "bacchus": {"count": 9},
+                "proteus": {"count": 6},
+                "orpheus": {"count": 8}
+            }
         },
         "stuffedAnimals": {
             "type": {
-                "seaAnimals": {
-                    "count": 0
-                },
-                "bears": {
-                    "count": 0
-                }
+                "seaAnimals": {"count": 7},
+                "bears": {"count": 4}
             },
             "parade": {
-                "generic": {
-                    "count": 0,
-                },
-                "druids": {
-                    "count": 0,
-                },
-                "alla": {
-                    "count": 0,
-                },
-                "chaos": {
-                    "count": 0,
-                },
-                "babylon": {
-                    "count": 0,
-                },
-                "muses": {
-                    "count": 0,
-                },
-                "hermes": {
-                    "count": 0,
-                },
-                "detat": {
-                    "count": 0,
-                },
-                "morpheus": {
-                    "count": 0,
-                },
-                "iris": {
-                    "count": 0,
-                },
-                "tucks": {
-                    "count": 0,
-                },
-                "okeanos": {
-                    "count": 0,
-                },
-                "midcity": {
-                    "count": 0,
-                },
-                "thoth": {
-                    "count": 0,
-                },
-                "bacchus": {
-                    "count": 0,
-                },
-                "proteus": {
-                    "count": 0,
-                },
-                "orpheus": {
-                    "count": 0,
-                }
+                "generic": {"count": 0},
+                "druids": {"count": 0},
+                "alla": {"count": 0},
+                "chaos": {"count": 1},
+                "babylon": {"count": 0},
+                "muses": {"count": 1},
+                "hermes": {"count": 0},
+                "detat": {"count": 0},
+                "morpheus": {"count": 0},
+                "iris": {"count": 1},
+                "tucks": {"count": 1},
+                "okeanos": {"count": 3},
+                "midcity": {"count": 2},
+                "thoth": {"count": 2},
+                "bacchus": {"count": 1},
+                "proteus": {"count": 0},
+                "orpheus": {"count": 1}
             }
         },
         "specials": {
@@ -1443,21 +516,11 @@
                 }
             },
             "items": {
-                "shoes": {
-                    "count": 0
-                },
-                "lamps": {
-                    "count": 0
-                },
-                "sunglasses": {
-                    "count": 0
-                },
-                "plungers": {
-                    "count": 0
-                },
-                "tamborines": {
-                    "count": 0
-                }
+                "shoes": {"count": 1},
+                "lamps": {"count": 0},
+                "sunglasses": {"count": 1},
+                "plungers": {"count": 2},
+                "tamborines": {"count": 1}
             }
         }
     }
