@@ -46,6 +46,97 @@ function generateColorPattern(count) {
     return colors;
 }
 
+// Helper function to detect mobile screens
+function isMobileView() {
+    return window.innerWidth <= 480;
+}
+
+// Helper function to get mobile-optimized chart configuration
+function getMobileChartOptions() {
+    if (!isMobileView()) return {};
+    
+    return {
+        layout: {
+            padding: {
+                left: 5,
+                right: 5,
+                top: 15,
+                bottom: 5
+            }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    font: {
+                        size: 11
+                    },
+                    padding: 8
+                }
+            },
+            title: {
+                font: {
+                    size: 14
+                }
+            },
+            datalabels: {
+                font: {
+                    size: 10
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    font: {
+                        size: 11
+                    },
+                    padding: 3
+                },
+                title: {
+                    font: {
+                        size: 11
+                    }
+                }
+            },
+            y: {
+                ticks: {
+                    font: {
+                        size: 11
+                    },
+                    padding: 3
+                },
+                title: {
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+}
+
+// Helper function to merge chart options with mobile optimizations
+function mergeChartOptions(baseOptions) {
+    if (!isMobileView()) return baseOptions;
+    
+    const mobileOptions = getMobileChartOptions();
+    
+    // Deep merge function
+    function deepMerge(target, source) {
+        const output = { ...target };
+        for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                output[key] = deepMerge(target[key] || {}, source[key]);
+            } else {
+                output[key] = source[key];
+            }
+        }
+        return output;
+    }
+    
+    return deepMerge(baseOptions, mobileOptions);
+}
+
 // ========================================
 // Initialization
 // ========================================
@@ -375,6 +466,51 @@ function renderBeadCountChart(beadData) {
 
     if (charts.beadCount) charts.beadCount.destroy();
     
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 10,
+                top: 30,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `Count: ${context.parsed.y}`
+                }
+            }
+        },
+        scales: {
+            y: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5
+                }
+            },
+            x: {
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
     charts.beadCount = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -387,50 +523,7 @@ function renderBeadCountChart(beadData) {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    left: 10,
-                    right: 10,
-                    top: 30,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    color: '#2D1B4E',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: (value) => value
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => `Count: ${context.parsed.y}`
-                    }
-                }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true, 
-                    title: { display: true, text: 'Count' },
-                    ticks: {
-                        padding: 5
-                    }
-                },
-                x: {
-                    ticks: {
-                        padding: 5
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
     });
 }
@@ -442,6 +535,51 @@ function renderBeadWeightChart(beadData) {
     const colors = labels.map(color => BEAD_COLORS[color] || '#999');
 
     if (charts.beadWeight) charts.beadWeight.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 10,
+                top: 30,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value + 'g'
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `Weight: ${context.parsed.y}g`
+                }
+            }
+        },
+        scales: {
+            y: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Weight (grams)' },
+                ticks: {
+                    padding: 5
+                }
+            },
+            x: {
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
     
     charts.beadWeight = new Chart(ctx, {
         type: 'bar',
@@ -455,50 +593,7 @@ function renderBeadWeightChart(beadData) {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    left: 10,
-                    right: 10,
-                    top: 30,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    color: '#2D1B4E',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: (value) => value + 'g'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => `Weight: ${context.parsed.y}g`
-                    }
-                }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true, 
-                    title: { display: true, text: 'Weight (grams)' },
-                    ticks: {
-                        padding: 5
-                    }
-                },
-                x: {
-                    ticks: {
-                        padding: 5
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
     });
 }
@@ -513,6 +608,49 @@ function renderBeadPercentageChart(beadData) {
 
     if (charts.beadPercentage) charts.beadPercentage.destroy();
     
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20
+            }
+        },
+        plugins: {
+            legend: { 
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value, context) => {
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return percentage > 3 ? percentage + '%' : ''; // Only show if > 3%
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    };
+    
     charts.beadPercentage = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -524,48 +662,7 @@ function renderBeadPercentageChart(beadData) {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    left: 20,
-                    right: 20,
-                    top: 20,
-                    bottom: 20
-                }
-            },
-            plugins: {
-                legend: { 
-                    position: 'right',
-                    labels: {
-                        padding: 10,
-                        boxWidth: 15
-                    }
-                },
-                datalabels: {
-                    color: '#fff',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: (value, context) => {
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return percentage > 3 ? percentage + '%' : ''; // Only show if > 3%
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => {
-                            const label = context.label || '';
-                            const value = context.parsed;
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
     });
 }
@@ -599,6 +696,65 @@ function renderBeadTypesByParadeChart() {
     const specialData = parades.map(parade => mardiGrasData.beads.special?.[parade]?.count || 0);
     
     if (charts.beadTypesByParade) charts.beadTypesByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                display: true,
+                position: 'top',
+                labels: {
+                    padding: 15,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : ''
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 10,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
     
     charts.beadTypesByParade = new Chart(ctx, {
         type: 'bar',
@@ -635,64 +791,7 @@ function renderBeadTypesByParadeChart() {
                 }
             ]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            layout: {
-                padding: {
-                    left: 10,
-                    right: 50,
-                    top: 10,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: { 
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        padding: 15,
-                        boxWidth: 15
-                    }
-                },
-                datalabels: {
-                    color: '#fff',
-                    font: {
-                        weight: 'bold',
-                        size: 10
-                    },
-                    formatter: (value) => value > 0 ? value : ''
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => `${context.dataset.label}: ${context.parsed.x}`
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    stacked: true,
-                    beginAtZero: true,
-                    title: { display: true, text: 'Count' },
-                    ticks: {
-                        padding: 5,
-                        stepSize: 10,
-                        precision: 0
-                    }
-                },
-                y: {
-                    stacked: true,
-                    ticks: {
-                        padding: 10,
-                        autoSkip: false,
-                        font: {
-                            size: 11
-                        }
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
     });
 }
@@ -707,6 +806,41 @@ function renderItemsChart() {
 
     if (charts.items) charts.items.destroy();
     
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20
+            }
+        },
+        plugins: {
+            legend: { 
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.label}: ${context.parsed}`
+                }
+            }
+        }
+    };
+    
     charts.items = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -718,40 +852,7 @@ function renderItemsChart() {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    left: 20,
-                    right: 20,
-                    top: 20,
-                    bottom: 20
-                }
-            },
-            plugins: {
-                legend: { 
-                    position: 'right',
-                    labels: {
-                        padding: 10,
-                        boxWidth: 15
-                    }
-                },
-                datalabels: {
-                    color: '#fff',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: (value) => value
-                },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => `${context.label}: ${context.parsed}`
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
     });
 }
@@ -765,6 +866,48 @@ function renderStuffedAnimalsChart() {
 
     if (charts.stuffedAnimals) charts.stuffedAnimals.destroy();
     
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 10,
+                top: 30,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            y: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            x: {
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
     charts.stuffedAnimals = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -777,47 +920,7 @@ function renderStuffedAnimalsChart() {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    left: 10,
-                    right: 10,
-                    top: 30,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    color: '#2D1B4E',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: (value) => value
-                }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true, 
-                    title: { display: true, text: 'Count' },
-                    ticks: {
-                        padding: 5,
-                        stepSize: 1,
-                        precision: 0
-                    }
-                },
-                x: {
-                    ticks: {
-                        padding: 5
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
     });
 }
@@ -836,6 +939,50 @@ function renderSpecialsChart() {
 
     if (charts.specials) charts.specials.destroy();
     
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            y: {
+                ticks: {
+                    padding: 10,
+                    autoSkip: false
+                }
+            }
+        }
+    };
+    
     charts.specials = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -848,49 +995,7 @@ function renderSpecialsChart() {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            layout: {
-                padding: {
-                    left: 10,
-                    right: 50,
-                    top: 10,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'right',
-                    color: '#2D1B4E',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: (value) => value
-                }
-            },
-            scales: {
-                x: { 
-                    beginAtZero: true, 
-                    title: { display: true, text: 'Count' },
-                    ticks: {
-                        padding: 5,
-                        stepSize: 1,
-                        precision: 0
-                    }
-                },
-                y: {
-                    ticks: {
-                        padding: 10,
-                        autoSkip: false
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
     });
 }
@@ -905,6 +1010,50 @@ function renderDoubloonsChart() {
 
     if (charts.doubloons) charts.doubloons.destroy();
     
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: isHorizontal ? 'y' : 'x',
+        layout: {
+            padding: {
+                left: 10,
+                right: isHorizontal ? 50 : 10,
+                top: isHorizontal ? 10 : 30,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: isHorizontal ? 'right' : 'top',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            [isHorizontal ? 'x' : 'y']: {
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            [isHorizontal ? 'y' : 'x']: {
+                ticks: {
+                    padding: 10,
+                    autoSkip: false
+                }
+            }
+        }
+    };
+    
     charts.doubloons = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -917,49 +1066,7 @@ function renderDoubloonsChart() {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: isHorizontal ? 'y' : 'x',
-            layout: {
-                padding: {
-                    left: 10,
-                    right: isHorizontal ? 50 : 10,
-                    top: isHorizontal ? 10 : 30,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: isHorizontal ? 'right' : 'top',
-                    color: '#2D1B4E',
-                    font: {
-                        weight: 'bold',
-                        size: 12
-                    },
-                    formatter: (value) => value
-                }
-            },
-            scales: {
-                [isHorizontal ? 'x' : 'y']: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Count' },
-                    ticks: {
-                        padding: 5,
-                        stepSize: 1,
-                        precision: 0
-                    }
-                },
-                [isHorizontal ? 'y' : 'x']: {
-                    ticks: {
-                        padding: 10,
-                        autoSkip: false
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
     });
 }
@@ -973,6 +1080,53 @@ function renderParadeComparisonCharts() {
     const itemsCtx = document.getElementById('paradeItemsChart');
     if (charts.paradeItems) charts.paradeItems.destroy();
     
+    const itemsBaseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 11
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            y: {
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+    
     charts.paradeItems = new Chart(itemsCtx, {
         type: 'bar',
         data: {
@@ -985,58 +1139,58 @@ function renderParadeComparisonCharts() {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            layout: {
-                padding: {
-                    left: 10,
-                    right: 50,
-                    top: 10,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'right',
-                    color: '#2D1B4E',
-                    font: {
-                        weight: 'bold',
-                        size: 11
-                    },
-                    formatter: (value) => value
-                }
-            },
-            scales: {
-                x: { 
-                    beginAtZero: true, 
-                    title: { display: true, text: 'Count' },
-                    ticks: {
-                        padding: 5,
-                        stepSize: 1,
-                        precision: 0
-                    }
-                },
-                y: {
-                    ticks: {
-                        padding: 10,
-                        autoSkip: false,
-                        font: {
-                            size: 11
-                        }
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(itemsBaseOptions),
         plugins: [ChartDataLabels]
     });
 
     // Total Weight Chart
     const weightCtx = document.getElementById('paradeWeightChart');
     if (charts.paradeWeight) charts.paradeWeight.destroy();
+    
+    const weightBaseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 11
+                },
+                formatter: (value) => value + 'g'
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Weight (grams)' },
+                ticks: {
+                    padding: 5
+                }
+            },
+            y: {
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
     
     charts.paradeWeight = new Chart(weightCtx, {
         type: 'bar',
@@ -1050,50 +1204,7 @@ function renderParadeComparisonCharts() {
                 borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            layout: {
-                padding: {
-                    left: 10,
-                    right: 50,
-                    top: 10,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                datalabels: {
-                    anchor: 'end',
-                    align: 'right',
-                    color: '#2D1B4E',
-                    font: {
-                        weight: 'bold',
-                        size: 11
-                    },
-                    formatter: (value) => value + 'g'
-                }
-            },
-            scales: {
-                x: { 
-                    beginAtZero: true, 
-                    title: { display: true, text: 'Weight (grams)' },
-                    ticks: {
-                        padding: 5
-                    }
-                },
-                y: {
-                    ticks: {
-                        padding: 10,
-                        autoSkip: false,
-                        font: {
-                            size: 11
-                        }
-                    }
-                }
-            }
-        },
+        options: mergeChartOptions(weightBaseOptions),
         plugins: [ChartDataLabels]
     });
 }

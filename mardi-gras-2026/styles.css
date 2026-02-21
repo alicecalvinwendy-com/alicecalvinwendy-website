@@ -486,11 +486,11 @@ footer {
 
 @media (max-width: 480px) {
     main {
-        padding: var(--spacing-sm) 0.5rem;
+        padding: var(--spacing-sm) 2px;
     }
     
     section {
-        padding: var(--spacing-sm);
+        padding: 8px;
         margin-bottom: var(--spacing-sm);
     }
     
@@ -541,15 +541,28 @@ footer {
         font-size: 0.75rem;
     }
     
+    /* Chart container improvements for mobile readability */
     .chart-container {
-        height: 350px;
-        max-height: 350px;
+        padding: 12px;
+        min-width: 500px;
+        height: 400px;
+        max-height: 400px;
     }
     
     .chart-wide,
     .chart-full-width {
-        height: 450px;
-        max-height: 450px;
+        height: 550px;
+        max-height: 550px;
+    }
+    
+    /* Enable horizontal scrolling for chart grids */
+    .beads-grid,
+    .throws-grid,
+    .comparison-grid {
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        overflow-x: auto;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
     }
     
     .hero {
