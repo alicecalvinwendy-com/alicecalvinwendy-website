@@ -139,13 +139,31 @@
     "beads": {
         "black": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -311,13 +329,31 @@
         },
         "orange": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -483,13 +519,31 @@
         },
         "glass": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -655,13 +709,31 @@
         },
         "red": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -827,13 +899,31 @@
         },
         "white": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -999,13 +1089,31 @@
         },
         "blue": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -1171,13 +1279,31 @@
         },
         "pink": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -1343,13 +1469,31 @@
         },
         "silver": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -1515,13 +1659,31 @@
         },
         "green": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -1687,13 +1849,31 @@
         },
         "purple": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -1859,13 +2039,31 @@
         },
         "gold": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -2031,13 +2229,31 @@
         },
         "lightup": {
             "unaffiliated": {
-                "medallion":{
+                "small":{
                     "weight": 45,
                     "count": 3
                 },
-                "regular":{
+                "medium":{
                     "weight": 45,
                     "count": 3
+                },
+                "large":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "nonSphere":{
+                    "weight": 45,
+                    "count": 3
+                },
+                "other": {
+                    "medallion": {
+                        "weight": 45,
+                        "count": 3
+                    },
+                    "special": {
+                        "weight": 45,
+                        "count": 3
+                    }
                 },
             },
             "druids": {
@@ -2203,346 +2419,146 @@
         },
         "special": {
             "unaffiliated": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "druids": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "alla": {
-               "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "chaos": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
+        
             },
             "babylon": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
+             
             },
             "muses": {
-               "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "hermes": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "detat": {
-               "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "morpheus": {
-               "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "iris": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "tucks": {
-             "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "okeanos": {
-              "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "midcity": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "thoth": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "bacchus": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "proteus": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "orpheus": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             }
         },
         "huge": {
             "unaffiliated": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "druids": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "alla": {
-               "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "chaos": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
+        
             },
             "babylon": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
+             
             },
             "muses": {
-               "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "hermes": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "detat": {
-               "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "morpheus": {
-               "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "iris": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "tucks": {
-             "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "okeanos": {
-              "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "midcity": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "thoth": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "bacchus": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "proteus": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             },
             "orpheus": {
-                "medallion":{
-                    "weight": 45,
-                    "count": 3
-                },
-                "regular":{
-                    "weight": 45,
-                    "count": 3
-                },
+                "weight": 45,
+                "count": 3
             }
         }
     },

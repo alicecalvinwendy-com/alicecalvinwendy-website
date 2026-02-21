@@ -396,7 +396,7 @@ function getBeadDataByType() {
     const paradeLabels = parades.map(p => {
         if (p === 'unaffiliated') return 'Unaffiliated';
         const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
-        return parade ? parade.name : p;
+        return parade ? parade.shortName : p;
     });
 
     const medallionData = parades.map(parade => {
@@ -445,12 +445,12 @@ function getDoubloonsData() {
     if (currentFilters.parade === 'all') {
         const data = {};
         mardiGrasData.parades.forEach(parade => {
-            data[parade.name] = mardiGrasData.doubloons[parade.keyName]?.count || 0;
+            data[parade.shortName] = mardiGrasData.doubloons[parade.keyName]?.count || 0;
         });
         return data;
     } else {
         return {
-            [mardiGrasData.parades.find(p => p.keyName === currentFilters.parade).name]:
+            [mardiGrasData.parades.find(p => p.keyName === currentFilters.parade).shortName]:
                 mardiGrasData.doubloons[currentFilters.parade]?.count || 0
         };
     }
@@ -461,7 +461,7 @@ function getParadeComparisonData() {
     const weightData = {};
 
     mardiGrasData.parades.forEach(parade => {
-        const paradeName = parade.name;
+        const paradeShortName = parade.shortName;
         const paradeKey = parade.keyName;
 
         // Calculate total items
@@ -470,7 +470,7 @@ function getParadeComparisonData() {
             totalItems += itemData[paradeKey]?.count || 0;
         });
         totalItems += mardiGrasData.throws.stuffedAnimals.parade[paradeKey]?.count || 0;
-        itemsData[paradeName] = totalItems;
+        itemsData[paradeShortName] = totalItems;
 
         // Calculate total bead weight (medallion + regular)
         let totalWeight = 0;
@@ -479,7 +479,7 @@ function getParadeComparisonData() {
                 totalWeight += (colorData[paradeKey].medallion?.weight || 0) + (colorData[paradeKey].regular?.weight || 0);
             }
         });
-        weightData[paradeName] = totalWeight;
+        weightData[paradeShortName] = totalWeight;
     });
 
     return { itemsData, weightData };
@@ -733,7 +733,7 @@ function renderBeadTypesByParadeChart() {
     const paradeLabels = parades.map(p => {
         if (p === 'unaffiliated') return 'Unaffiliated';
         const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
-        return parade ? parade.name : p;
+        return parade ? parade.shortName : p;
     });
     
     // Calculate medallion and regular bead totals for each parade
@@ -1265,7 +1265,8 @@ function renderMedallionVsRegularByParadeChart() {
                 beginAtZero: true,
                 title: { display: true, text: 'Count' },
                 ticks: {
-                    padding: 5
+                    padding: 5,
+                    stepSize: 20
                 }
             },
             y: {
@@ -1274,7 +1275,7 @@ function renderMedallionVsRegularByParadeChart() {
                     padding: 10,
                     autoSkip: false,
                     font: {
-                        size: 11
+                        size: 10
                     }
                 }
             }
