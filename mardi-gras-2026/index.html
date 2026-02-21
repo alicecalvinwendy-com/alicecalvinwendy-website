@@ -109,6 +109,22 @@
             </div>
         </section>
 
+        <!-- Medallion vs Regular Beads Section -->
+        <section class="medallion-section">
+            <h2>Medallion vs Regular Beads</h2>
+            <p class="section-description">Breakdown showing medallion beads (with logos/designs) versus regular beads</p>
+            <div class="charts-grid medallion-grid">
+                <div class="chart-container">
+                    <h3>Medallion vs Regular by Color</h3>
+                    <canvas id="medallionVsRegularColorChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Medallion vs Regular by Parade</h3>
+                    <canvas id="medallionVsRegularParadeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
         <!-- Throws Section -->
         <section class="throws-section">
             <h2>Throws & Items</h2>
@@ -167,8 +183,10 @@
                         <thead>
                             <tr>
                                 <th class="sortable" data-sort="color">Color</th>
-                                <th class="sortable" data-sort="count">Count</th>
-                                <th class="sortable" data-sort="weight">Weight (g)</th>
+                                <th class="sortable" data-sort="count">Total Count</th>
+                                <th class="sortable" data-sort="weight">Total Weight (g)</th>
+                                <th class="sortable" data-sort="medallion">Medallion</th>
+                                <th class="sortable" data-sort="regular">Regular</th>
                             </tr>
                         </thead>
                         <tbody></tbody>

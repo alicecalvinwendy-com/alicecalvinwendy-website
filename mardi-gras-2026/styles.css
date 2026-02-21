@@ -306,6 +306,10 @@ section h3 {
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
 }
 
+.medallion-grid {
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+}
+
 .chart-container {
     background: var(--background);
     border-radius: var(--border-radius);
@@ -450,7 +454,8 @@ footer {
     
     .beads-grid,
     .throws-grid,
-    .comparison-grid {
+    .comparison-grid,
+    .medallion-grid {
         grid-template-columns: 1fr;
     }
     
@@ -558,7 +563,8 @@ footer {
     /* Enable horizontal scrolling for chart grids */
     .beads-grid,
     .throws-grid,
-    .comparison-grid {
+    .comparison-grid,
+    .medallion-grid {
         grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
         overflow-x: auto;
         overflow-y: visible;

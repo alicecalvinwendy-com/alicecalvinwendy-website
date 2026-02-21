@@ -187,7 +187,7 @@ function initializeUI() {
 function renderParadeGrid() {
     const grid = document.getElementById('paradeGrid');
     grid.innerHTML = mardiGrasData.parades.map(parade => `
-        <div class="parade-card" data-parade="${parade.shortName}">
+        <div class="parade-card" data-parade="${parade.keyName}">
             <img src="${parade.logo}" alt="${parade.name}" class="parade-logo" 
                  onerror="this.style.display='none'">
             <div class="parade-name">${parade.name}</div>
@@ -202,7 +202,7 @@ function setupFilters() {
     const paradeFilter = document.getElementById('paradeFilter');
     mardiGrasData.parades.forEach(parade => {
         const option = document.createElement('option');
-        option.value = parade.shortName;
+        option.value = parade.keyName;
         option.textContent = parade.name;
         paradeFilter.appendChild(option);
     });
@@ -275,15 +275,21 @@ function calculateStatistics() {
     };
 
     const parades = currentFilters.parade === 'all' 
-        ? ['generic', ...mardiGrasData.parades.map(p => p.shortName)]
+        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
         : [currentFilters.parade];
 
-    // Calculate beads
+    // Calculate beads (medallion + regular)
     Object.values(mardiGrasData.beads).forEach(colorData => {
         parades.forEach(parade => {
             if (colorData[parade]) {
-                stats.totalBeadsCount += colorData[parade].count || 0;
-                stats.totalBeadsWeight += colorData[parade].weight || 0;
+                if (colorData[parade].medallion) {
+                    stats.totalBeadsCount += colorData[parade].medallion.count || 0;
+                    stats.totalBeadsWeight += colorData[parade].medallion.weight || 0;
+                }
+                if (colorData[parade].regular) {
+                    stats.totalBeadsCount += colorData[parade].regular.count || 0;
+                    stats.totalBeadsWeight += colorData[parade].regular.weight || 0;
+                }
             }
         });
     });
@@ -348,7 +354,7 @@ function renderStatistics() {
 
 function getBeadData() {
     const parades = currentFilters.parade === 'all'
-        ? ['generic', ...mardiGrasData.parades.map(p => p.shortName)]
+        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
         : [currentFilters.parade];
 
     const colors = currentFilters.beadColor === 'all'
@@ -358,11 +364,22 @@ function getBeadData() {
     const data = {};
     
     colors.forEach(color => {
-        data[color] = { count: 0, weight: 0 };
+        data[color] = { count: 0, weight: 0, medallion: { count: 0, weight: 0 }, regular: { count: 0, weight: 0 } };
         parades.forEach(parade => {
             if (mardiGrasData.beads[color] && mardiGrasData.beads[color][parade]) {
-                data[color].count += mardiGrasData.beads[color][parade].count || 0;
-                data[color].weight += mardiGrasData.beads[color][parade].weight || 0;
+                // Aggregate medallion counts
+                if (mardiGrasData.beads[color][parade].medallion) {
+                    data[color].medallion.count += mardiGrasData.beads[color][parade].medallion.count || 0;
+                    data[color].medallion.weight += mardiGrasData.beads[color][parade].medallion.weight || 0;
+                }
+                // Aggregate regular counts
+                if (mardiGrasData.beads[color][parade].regular) {
+                    data[color].regular.count += mardiGrasData.beads[color][parade].regular.count || 0;
+                    data[color].regular.weight += mardiGrasData.beads[color][parade].regular.weight || 0;
+                }
+                // Total counts (medallion + regular)
+                data[color].count = data[color].medallion.count + data[color].regular.count;
+                data[color].weight = data[color].medallion.weight + data[color].regular.weight;
             }
         });
     });
@@ -370,9 +387,44 @@ function getBeadData() {
     return data;
 }
 
+// New function to get bead data with type breakdown by parade
+function getBeadDataByType() {
+    const parades = currentFilters.parade === 'all'
+        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
+        : [currentFilters.parade];
+
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.name : p;
+    });
+
+    const medallionData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[parade] && colorData[parade].medallion) {
+                total += colorData[parade].medallion.count || 0;
+            }
+        });
+        return total;
+    });
+
+    const regularData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[parade] && colorData[parade].regular) {
+                total += colorData[parade].regular.count || 0;
+            }
+        });
+        return total;
+    });
+
+    return { paradeLabels, medallionData, regularData };
+}
+
 function getItemsData() {
     const parades = currentFilters.parade === 'all'
-        ? ['generic', ...mardiGrasData.parades.map(p => p.shortName)]
+        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
         : [currentFilters.parade];
 
     const data = {};
@@ -393,12 +445,12 @@ function getDoubloonsData() {
     if (currentFilters.parade === 'all') {
         const data = {};
         mardiGrasData.parades.forEach(parade => {
-            data[parade.name] = mardiGrasData.doubloons[parade.shortName]?.count || 0;
+            data[parade.name] = mardiGrasData.doubloons[parade.keyName]?.count || 0;
         });
         return data;
     } else {
         return {
-            [mardiGrasData.parades.find(p => p.shortName === currentFilters.parade).name]:
+            [mardiGrasData.parades.find(p => p.keyName === currentFilters.parade).name]:
                 mardiGrasData.doubloons[currentFilters.parade]?.count || 0
         };
     }
@@ -410,20 +462,22 @@ function getParadeComparisonData() {
 
     mardiGrasData.parades.forEach(parade => {
         const paradeName = parade.name;
-        const paradeShort = parade.shortName;
+        const paradeKey = parade.keyName;
 
         // Calculate total items
         let totalItems = 0;
         Object.values(mardiGrasData.throws.items).forEach(itemData => {
-            totalItems += itemData[paradeShort]?.count || 0;
+            totalItems += itemData[paradeKey]?.count || 0;
         });
-        totalItems += mardiGrasData.throws.stuffedAnimals.parade[paradeShort]?.count || 0;
+        totalItems += mardiGrasData.throws.stuffedAnimals.parade[paradeKey]?.count || 0;
         itemsData[paradeName] = totalItems;
 
-        // Calculate total bead weight
+        // Calculate total bead weight (medallion + regular)
         let totalWeight = 0;
         Object.values(mardiGrasData.beads).forEach(colorData => {
-            totalWeight += colorData[paradeShort]?.weight || 0;
+            if (colorData[paradeKey]) {
+                totalWeight += (colorData[paradeKey].medallion?.weight || 0) + (colorData[paradeKey].regular?.weight || 0);
+            }
         });
         weightData[paradeName] = totalWeight;
     });
@@ -441,6 +495,7 @@ function renderAllVisualizations() {
     renderStuffedAnimalsChart();
     renderSpecialsChart();
     renderDoubloonsChart();
+    renderMedallionVsRegularCharts(); // New visualization section
     
     if (currentFilters.parade === 'all') {
         renderParadeComparisonCharts();
@@ -672,28 +727,35 @@ function renderBeadTypesByParadeChart() {
     
     // Get parades to display
     const parades = currentFilters.parade === 'all'
-        ? ['generic', ...mardiGrasData.parades.map(p => p.shortName)]
+        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
         : [currentFilters.parade];
     
     const paradeLabels = parades.map(p => {
-        if (p === 'generic') return 'Generic';
-        const parade = mardiGrasData.parades.find(pr => pr.shortName === p);
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
         return parade ? parade.name : p;
     });
     
-    // Calculate colored beads (sum of purple, green, gold, red, blue, pink, white, orange, black, silver)
-    const coloredBeadsData = parades.map(parade => {
+    // Calculate medallion and regular bead totals for each parade
+    const medallionData = parades.map(parade => {
         let total = 0;
-        mardiGrasData.coloredBeads.forEach(color => {
-            total += mardiGrasData.beads[color]?.[parade]?.count || 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[parade] && colorData[parade].medallion) {
+                total += colorData[parade].medallion.count || 0;
+            }
         });
         return total;
     });
     
-    // Calculate lightup, medallion, special counts
-    const lightupData = parades.map(parade => mardiGrasData.beads.lightup?.[parade]?.count || 0);
-    const medallionData = parades.map(parade => mardiGrasData.beads.medallion?.[parade]?.count || 0);
-    const specialData = parades.map(parade => mardiGrasData.beads.special?.[parade]?.count || 0);
+    const regularData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[parade] && colorData[parade].regular) {
+                total += colorData[parade].regular.count || 0;
+            }
+        });
+        return total;
+    });
     
     if (charts.beadTypesByParade) charts.beadTypesByParade.destroy();
     
@@ -762,31 +824,17 @@ function renderBeadTypesByParadeChart() {
             labels: paradeLabels,
             datasets: [
                 {
-                    label: 'Colored',
-                    data: coloredBeadsData,
+                    label: 'Regular Beads',
+                    data: regularData,
                     backgroundColor: CHART_COLORS.purple,
                     borderColor: CHART_COLORS.purple,
                     borderWidth: 1
                 },
                 {
-                    label: 'Light-up',
-                    data: lightupData,
+                    label: 'Medallion Beads',
+                    data: medallionData,
                     backgroundColor: CHART_COLORS.gold,
                     borderColor: CHART_COLORS.gold,
-                    borderWidth: 1
-                },
-                {
-                    label: 'Medallion',
-                    data: medallionData,
-                    backgroundColor: CHART_COLORS.green,
-                    borderColor: CHART_COLORS.green,
-                    borderWidth: 1
-                },
-                {
-                    label: 'Special',
-                    data: specialData,
-                    backgroundColor: '#FF6384',
-                    borderColor: '#FF6384',
                     borderWidth: 1
                 }
             ]
@@ -1071,6 +1119,194 @@ function renderDoubloonsChart() {
     });
 }
 
+function renderMedallionVsRegularCharts() {
+    // Render medallion vs regular by color
+    renderMedallionVsRegularByColorChart();
+    
+    // Render medallion vs regular by parade  
+    renderMedallionVsRegularByParadeChart();
+}
+
+function renderMedallionVsRegularByColorChart() {
+    const ctx = document.getElementById('medallionVsRegularColorChart');
+    if (!ctx) return; // Chart element doesn't exist yet
+    
+    const beadData = getBeadData();
+    const labels = Object.keys(beadData).filter(color => beadData[color].count > 0);
+    const medallionCounts = labels.map(color => beadData[color].medallion.count);
+    const regularCounts = labels.map(color => beadData[color].regular.count);
+    const colors = labels.map(color => BEAD_COLORS[color] || '#999');
+    
+    if (charts.medallionVsRegularColor) charts.medallionVsRegularColor.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 10,
+                top: 30,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                display: true,
+                position: 'top',
+                labels: {
+                    padding: 15
+                }
+            },
+            datalabels: {
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 11
+                },
+                formatter: (value) => value > 0 ? value : ''
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.y}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                ticks: {
+                    padding: 5
+                }
+            },
+            y: { 
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.medallionVsRegularColor = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [
+                {
+                    label: 'Regular',
+                    data: regularCounts,
+                    backgroundColor: colors.map(c => c),
+                    borderColor: colors.map(c => c),
+                    borderWidth: 2
+                },
+                {
+                    label: 'Medallion',
+                    data: medallionCounts,
+                    backgroundColor: colors.map(c => c + 'CC'),
+                    borderColor: colors.map(c => c),
+                    borderWidth: 2,
+                    borderDash: [5, 5]
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderMedallionVsRegularByParadeChart() {
+    const ctx = document.getElementById('medallionVsRegularParadeChart');
+    if (!ctx) return; // Chart element doesn't exist yet
+    
+    const { paradeLabels, medallionData, regularData } = getBeadDataByType();
+    
+    if (charts.medallionVsRegularParade) charts.medallionVsRegularParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                display: true,
+                position: 'top',
+                labels: {
+                    padding: 15
+                }
+            },
+            datalabels: {
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : ''
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5
+                }
+            },
+            y: {
+                stacked: true,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.medallionVsRegularParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: paradeLabels,
+            datasets: [
+                {
+                    label: 'Regular Beads',
+                    data: regularData,
+                    backgroundColor: CHART_COLORS.purple,
+                    borderColor: CHART_COLORS.purple,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Medallion Beads',
+                    data: medallionData,
+                    backgroundColor: CHART_COLORS.gold,
+                    borderColor: CHART_COLORS.gold,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
 function renderParadeComparisonCharts() {
     const { itemsData, weightData } = getParadeComparisonData();
     const paradeCount = Object.keys(itemsData).length;
@@ -1232,6 +1468,8 @@ function renderBeadsTable() {
                 </td>
                 <td>${data.count.toLocaleString()}</td>
                 <td>${data.weight.toLocaleString()}</td>
+                <td>${data.medallion.count.toLocaleString()}</td>
+                <td>${data.regular.count.toLocaleString()}</td>
             </tr>
         `).join('');
 }
