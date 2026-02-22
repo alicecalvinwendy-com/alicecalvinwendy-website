@@ -770,15 +770,6 @@ function renderItemsWinners() {
 function renderBallsWinners() {
     const winners = getBallsWinners();
     
-    // Display most generous parade (balls)
-    const paradeWinnerEl = document.getElementById('paradeWinnerGenerousBalls');
-    const paradeDetailsEl = document.getElementById('paradeWinnerGenerousBallsDetails');
-    
-    if (paradeWinnerEl && winners.mostGenerousParade.name) {
-        paradeWinnerEl.textContent = winners.mostGenerousParade.name;
-        paradeDetailsEl.textContent = `${winners.mostGenerousParade.count.toLocaleString()} balls`;
-    }
-    
     // Display most common ball type
     const ballTypeWinnerEl = document.getElementById('ballTypeWinnerCommon');
     const ballTypeDetailsEl = document.getElementById('ballTypeWinnerCommonDetails');
