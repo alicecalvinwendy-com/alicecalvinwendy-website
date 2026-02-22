@@ -12,6 +12,7 @@ let weightUnit = 'grams'; // Default weight unit: 'grams' or 'pounds'
 // Filter state
 let filters = {
     colorDistributionByParade: new Set(),
+    lightUpVsRegularParade: new Set(),
     medallionVsRegularParade: new Set(),
     itemsByParade: new Set(),
     stuffedAnimalsByParade: new Set(),
@@ -392,12 +393,16 @@ function onParadeFilterChange(chartId, parade, checked) {
     // Re-render the appropriate chart
     if (chartId === 'colorDistributionByParade') {
         renderColorDistributionByParadeChart();
+    } else if (chartId === 'lightUpVsRegularParade') {
+        renderLightUpVsRegularByParadeChart();
     } else if (chartId === 'medallionVsRegularParade') {
         renderMedallionVsRegularByParadeChart();
     } else if (chartId === 'itemsByParade') {
         renderItemsByParadeChart();
     } else if (chartId === 'stuffedAnimalsByParade') {
         renderStuffedAnimalsByParadeChart();
+    } else if (chartId === 'ballsByParade') {
+        renderBallsByParadeChart();
     }
 }
 
@@ -413,6 +418,8 @@ function selectAllParades(chartId) {
     // Re-render the appropriate chart
     if (chartId === 'colorDistributionByParade') {
         renderColorDistributionByParadeChart();
+    } else if (chartId === 'lightUpVsRegularParade') {
+        renderLightUpVsRegularByParadeChart();
     } else if (chartId === 'medallionVsRegularParade') {
         renderMedallionVsRegularByParadeChart();
     } else if (chartId === 'itemsByParade') {
@@ -436,6 +443,8 @@ function deselectAllParades(chartId) {
     // Re-render the appropriate chart
     if (chartId === 'colorDistributionByParade') {
         renderColorDistributionByParadeChart();
+    } else if (chartId === 'lightUpVsRegularParade') {
+        renderLightUpVsRegularByParadeChart();
     } else if (chartId === 'medallionVsRegularParade') {
         renderMedallionVsRegularByParadeChart();
     } else if (chartId === 'itemsByParade') {
@@ -1314,6 +1323,44 @@ function getBallsByParadeData() {
     };
 }
 
+function getLightUpVsRegularBeadsByParadeData() {
+    const parades = mardiGrasData.parades.map(p => p.keyName); // Exclude unaffiliated
+    const paradeLabels = parades.map(p => {
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    // Calculate light-up bead totals for each parade
+    const lightUpData = parades.map(parade => {
+        let total = 0;
+        const lightupColorData = mardiGrasData.beads.lightup;
+        if (lightupColorData && lightupColorData[parade]) {
+            // Count medallion and regular for light-up beads
+            total += (lightupColorData[parade].medallion?.count || 0);
+            total += (lightupColorData[parade].regular?.count || 0);
+        }
+        return total;
+    });
+    
+    // Calculate regular (non-light-up) bead totals for each parade
+    const regularData = parades.map(parade => {
+        let total = 0;
+        Object.entries(mardiGrasData.beads).forEach(([color, colorData]) => {
+            // Skip the lightup color
+            if (color === 'lightup') return;
+            
+            if (colorData[parade]) {
+                // Count medallion and regular for all non-light-up colors
+                total += (colorData[parade].medallion?.count || 0);
+                total += (colorData[parade].regular?.count || 0);
+            }
+        });
+        return total;
+    });
+    
+    return { paradeLabels, lightUpData, regularData };
+}
+
 function getDoubloonsData() {
     const data = {};
     
@@ -1624,6 +1671,7 @@ function renderAllVisualizations() {
 function renderParadeBeadCharts() {
     // Charts moved from other sections
     renderBeadTypesByParadeChart();
+    renderLightUpVsRegularByParadeChart();
     renderMedallionVsRegularByParadeChart();
     
     // New parade-focused charts
@@ -3097,6 +3145,144 @@ function renderMedallionVsRegularByColorChart() {
         },
         options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
+    });
+}
+
+function renderLightUpVsRegularByParadeChart() {
+    const ctx = document.getElementById('lightUpVsRegularParadeChart');
+    if (!ctx) return;
+    
+    const { paradeLabels, lightUpData, regularData } = getLightUpVsRegularBeadsByParadeData();
+    
+    // Sort by total count (light-up + regular, largest to smallest)
+    const combined = paradeLabels.map((label, index) => ({
+        label,
+        lightUp: lightUpData[index],
+        regular: regularData[index],
+        total: lightUpData[index] + regularData[index]
+    }));
+    
+    const sorted = combined.sort((a, b) => b.total - a.total);
+    const sortedLabels = sorted.map(item => item.label);
+    const sortedLightUpData = sorted.map(item => item.lightUp);
+    const sortedRegularData = sorted.map(item => item.regular);
+    
+    // Initialize filters if not yet initialized
+    if (filters.lightUpVsRegularParade.size === 0) {
+        initializeParadeFilters('lightUpVsRegularParade', sortedLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.lightUpVsRegularParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.lightUpVsRegularParade) charts.lightUpVsRegularParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredLightUpData = filteredIndices.map(item => sortedLightUpData[item.index]);
+    const filteredRegularData = filteredIndices.map(item => sortedRegularData[item.index]);
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    if (charts.lightUpVsRegularParade) charts.lightUpVsRegularParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                display: true,
+                position: 'top',
+                labels: {
+                    padding: 15
+                }
+            },
+            datalabels: {
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : '',
+                anchor: 'center',
+                align: 'center'
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 10
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.lightUpVsRegularParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: [
+                {
+                    label: 'Regular Beads',
+                    data: filteredRegularData,
+                    backgroundColor: CHART_COLORS.purple,
+                    borderColor: CHART_COLORS.purple,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Light-up Beads',
+                    data: filteredLightUpData,
+                    backgroundColor: CHART_COLORS.gold,
+                    borderColor: CHART_COLORS.gold,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels, minBarLengthPlugin]
     });
 }
 
