@@ -14,6 +14,7 @@ let filters = {
     colorDistributionByParade: new Set(),
     medallionVsRegularParade: new Set(),
     itemsByParade: new Set(),
+    stuffedAnimalsByParade: new Set(),
     unaffiliatedColorBySubtype: new Set()
 };
 
@@ -359,6 +360,8 @@ function onParadeFilterChange(chartId, parade, checked) {
         renderMedallionVsRegularByParadeChart();
     } else if (chartId === 'itemsByParade') {
         renderItemsByParadeChart();
+    } else if (chartId === 'stuffedAnimalsByParade') {
+        renderStuffedAnimalsByParadeChart();
     }
 }
 
@@ -378,6 +381,8 @@ function selectAllParades(chartId) {
         renderMedallionVsRegularByParadeChart();
     } else if (chartId === 'itemsByParade') {
         renderItemsByParadeChart();
+    } else if (chartId === 'stuffedAnimalsByParade') {
+        renderStuffedAnimalsByParadeChart();
     }
 }
 
@@ -397,6 +402,8 @@ function deselectAllParades(chartId) {
         renderMedallionVsRegularByParadeChart();
     } else if (chartId === 'itemsByParade') {
         renderItemsByParadeChart();
+    } else if (chartId === 'stuffedAnimalsByParade') {
+        renderStuffedAnimalsByParadeChart();
     }
 }
 
@@ -606,10 +613,12 @@ function calculateStatistics() {
     });
 
     // Calculate stuffed animals
-    parades.forEach(parade => {
-        if (mardiGrasData.throws.stuffedAnimals.parade[parade]) {
-            stats.totalStuffedAnimals += mardiGrasData.throws.stuffedAnimals.parade[parade].count || 0;
-        }
+    Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                stats.totalStuffedAnimals += categoryData[parade].count || 0;
+            }
+        });
     });
 
     // Calculate specials
@@ -693,8 +702,7 @@ function renderItemsWinners() {
     const animalDetailsEl = document.getElementById('winnerStuffedAnimalDetails');
     
     if (animalWinnerEl && winners.mostCommonAnimal.name) {
-        const animalName = winners.mostCommonAnimal.name.replace(/([A-Z])/g, ' $1').trim();
-        animalWinnerEl.textContent = animalName.charAt(0).toUpperCase() + animalName.slice(1);
+        animalWinnerEl.textContent = winners.mostCommonAnimal.name;
         animalDetailsEl.textContent = `${winners.mostCommonAnimal.count.toLocaleString()} caught`;
     }
 }
@@ -949,11 +957,22 @@ function getItemsData() {
 
     const data = {};
     
+    // Get regular items
     Object.keys(mardiGrasData.throws.items).forEach(item => {
         data[item] = 0;
         parades.forEach(parade => {
             if (mardiGrasData.throws.items[item][parade]) {
                 data[item] += mardiGrasData.throws.items[item][parade].count || 0;
+            }
+        });
+    });
+    
+    // Add stuffed animals as a single rolled-up category
+    data['stuffed animals'] = 0;
+    Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                data['stuffed animals'] += categoryData[parade].count || 0;
             }
         });
     });
@@ -975,15 +994,24 @@ function getItemsWinners() {
         }
     });
     
-    // Find most common stuffed animal
-    const typeData = mardiGrasData.throws.stuffedAnimals.type;
+    // Find most common stuffed animal category
+    const stuffedAnimalCategories = mardiGrasData.throws['Stuffed Animals'];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
     let maxAnimalCount = 0;
     let mostCommonAnimal = '';
     
-    Object.entries(typeData).forEach(([type, data]) => {
-        if (data.count > maxAnimalCount) {
-            maxAnimalCount = data.count;
-            mostCommonAnimal = type;
+    Object.entries(stuffedAnimalCategories).forEach(([category, categoryData]) => {
+        let totalCount = 0;
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                totalCount += categoryData[parade].count || 0;
+            }
+        });
+        
+        if (totalCount > maxAnimalCount) {
+            maxAnimalCount = totalCount;
+            mostCommonAnimal = category;
         }
     });
     
@@ -1015,10 +1043,53 @@ function getItemsByParadeData() {
         };
     });
     
+    // Add stuffed animals as a rolled-up dataset
+    const stuffedAnimalsData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+            total += categoryData[parade]?.count || 0;
+        });
+        return total;
+    });
+    
+    datasets.push({
+        label: 'Stuffed Animals',
+        data: stuffedAnimalsData
+    });
+    
     return {
         labels: paradeLabels,
         datasets: datasets,
-        itemTypes: itemTypes
+        itemTypes: [...itemTypes, 'stuffed animals']
+    };
+}
+
+function getStuffedAnimalsByParadeData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    // Get all stuffed animal categories
+    const categories = Object.keys(mardiGrasData.throws['Stuffed Animals']);
+    
+    // Build dataset for each category
+    const datasets = categories.map(category => {
+        const data = parades.map(parade => {
+            return mardiGrasData.throws['Stuffed Animals'][category][parade]?.count || 0;
+        });
+        return {
+            label: category,
+            data: data
+        };
+    });
+    
+    return {
+        labels: paradeLabels,
+        datasets: datasets,
+        categories: categories
     };
 }
 
@@ -1069,7 +1140,12 @@ function getParadeComparisonData() {
         Object.values(mardiGrasData.throws.items).forEach(itemData => {
             totalItems += itemData[paradeKey]?.count || 0;
         });
-        totalItems += mardiGrasData.throws.stuffedAnimals.parade[paradeKey]?.count || 0;
+        
+        // Add stuffed animals
+        Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+            totalItems += categoryData[paradeKey]?.count || 0;
+        });
+        
         itemsData[paradeShortName] = totalItems;
 
         // Calculate total bead weight (medallion + regular)
@@ -1194,11 +1270,52 @@ function getParadeWinners() {
     const colorVarietyData = getColorVarietyByParade();
     const medallionData = getMedallionCountByParade();
     
+    // Get doubloons data (only for actual parades, not all categories)
+    const doubloonsData = {};
+    mardiGrasData.parades.forEach(parade => {
+        doubloonsData[parade.shortName] = mardiGrasData.doubloons[parade.keyName]?.count || 0;
+    });
+    
+    // Get stuffed animals data by parade
+    const stuffedAnimalsData = {};
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        let total = 0;
+        Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+            total += categoryData[paradeKey]?.count || 0;
+        });
+        stuffedAnimalsData[paradeShortName] = total;
+    });
+    
+    // Get total throws (items + stuffed animals) by parade
+    const throwsData = {};
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        let totalItems = 0;
+        
+        // Add regular items
+        Object.values(mardiGrasData.throws.items).forEach(itemData => {
+            totalItems += itemData[paradeKey]?.count || 0;
+        });
+        
+        // Add stuffed animals
+        Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+            totalItems += categoryData[paradeKey]?.count || 0;
+        });
+        
+        throwsData[paradeShortName] = totalItems;
+    });
+    
     // Find winners
     let mostGenerous = { name: '', count: 0 };
     let heaviest = { name: '', weight: 0 };
     let mostColorful = { name: '', colorCount: 0 };
     let medallionKing = { name: '', count: 0 };
+    let mostDoubloons = { name: '', count: 0 };
+    let mostStuffedAnimals = { name: '', count: 0 };
+    let mostThrows = { name: '', count: 0 };
     
     Object.entries(countData).forEach(([parade, count]) => {
         if (count > mostGenerous.count) {
@@ -1224,7 +1341,25 @@ function getParadeWinners() {
         }
     });
     
-    return { mostGenerous, heaviest, mostColorful, medallionKing };
+    Object.entries(doubloonsData).forEach(([parade, count]) => {
+        if (count > mostDoubloons.count) {
+            mostDoubloons = { name: parade, count };
+        }
+    });
+    
+    Object.entries(stuffedAnimalsData).forEach(([parade, count]) => {
+        if (count > mostStuffedAnimals.count) {
+            mostStuffedAnimals = { name: parade, count };
+        }
+    });
+    
+    Object.entries(throwsData).forEach(([parade, count]) => {
+        if (count > mostThrows.count) {
+            mostThrows = { name: parade, count };
+        }
+    });
+    
+    return { mostGenerous, heaviest, mostColorful, medallionKing, mostDoubloons, mostStuffedAnimals, mostThrows };
 }
 
 // ========================================
@@ -1249,6 +1384,7 @@ function renderAllVisualizations() {
     renderAllItemsChart();
     renderStuffedAnimalsChart();
     renderItemsByParadeChart();
+    renderStuffedAnimalsByParadeChart();
     renderSpecialsChart();
     
     // Tables
@@ -1720,12 +1856,25 @@ function renderItemsChart() {
 
 function renderStuffedAnimalsChart() {
     const ctx = document.getElementById('stuffedAnimalsChart');
-    const typeData = mardiGrasData.throws.stuffedAnimals.type;
+    const stuffedAnimalCategories = mardiGrasData.throws['Stuffed Animals'];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
+    // Calculate totals for each category
+    const categoryTotals = {};
+    Object.entries(stuffedAnimalCategories).forEach(([category, categoryData]) => {
+        let total = 0;
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                total += categoryData[parade].count || 0;
+            }
+        });
+        categoryTotals[category] = total;
+    });
     
     // Sort by count (largest to smallest)
-    const sortedEntries = Object.entries(typeData).sort((a, b) => b[1].count - a[1].count);
-    const labels = sortedEntries.map(([type]) => type);
-    const data = sortedEntries.map(([, value]) => value.count);
+    const sortedEntries = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(([category]) => category);
+    const data = sortedEntries.map(([, count]) => count);
     const colors = generateColorPattern(labels.length);
 
     if (charts.stuffedAnimals) charts.stuffedAnimals.destroy();
@@ -1776,7 +1925,7 @@ function renderStuffedAnimalsChart() {
     charts.stuffedAnimals = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels.map(l => l.replace(/([A-Z])/g, ' $1').trim()),
+            labels: labels,
             datasets: [{
                 label: 'Count',
                 data: data,
@@ -2003,6 +2152,129 @@ function renderItemsByParadeChart() {
     };
     
     charts.itemsByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: coloredDatasets
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderStuffedAnimalsByParadeChart() {
+    const ctx = document.getElementById('stuffedAnimalsByParadeChart');
+    if (!ctx) return;
+    
+    const stuffedAnimalsByParadeData = getStuffedAnimalsByParadeData();
+    const { labels, datasets, categories } = stuffedAnimalsByParadeData;
+    
+    // Calculate total stuffed animals for each parade and sort (largest to smallest)
+    const paradeWithTotals = labels.map((label, index) => {
+        const total = datasets.reduce((sum, dataset) => sum + dataset.data[index], 0);
+        return { label, index, total };
+    });
+    
+    paradeWithTotals.sort((a, b) => b.total - a.total);
+    
+    const sortedLabels = paradeWithTotals.map(item => item.label);
+    const sortedIndices = paradeWithTotals.map(item => item.index);
+    
+    // Reorder datasets according to sorted parade order
+    const sortedDatasets = datasets.map(dataset => ({
+        ...dataset,
+        data: sortedIndices.map(idx => dataset.data[idx])
+    }));
+    
+    // Initialize filters if not yet initialized
+    if (filters.stuffedAnimalsByParade.size === 0) {
+        initializeParadeFilters('stuffedAnimalsByParade', sortedLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.stuffedAnimalsByParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.stuffedAnimalsByParade) charts.stuffedAnimalsByParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredDatasets = sortedDatasets.map(dataset => ({
+        ...dataset,
+        data: filteredIndices.map(item => dataset.data[item.index])
+    }));
+    
+    // Generate distinct colors for each category
+    const categoryColors = generateDistinctColors(categories.length);
+    
+    // Map colors to datasets
+    const coloredDatasets = filteredDatasets.map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: categoryColors[index],
+        borderColor: categoryColors[index],
+        borderWidth: 1
+    }));
+    
+    if (charts.stuffedAnimalsByParade) charts.stuffedAnimalsByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                display: false // Don't show individual values on stacked segments
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.x;
+                        return value > 0 ? `${label}: ${value}` : '';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Stuffed Animal Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 5,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.stuffedAnimalsByParade = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: filteredLabels,
@@ -3071,6 +3343,30 @@ function renderParadeWinners() {
     if (medallionEl && winners.medallionKing.name) {
         medallionEl.textContent = winners.medallionKing.name;
         medallionDetailsEl.textContent = `${winners.medallionKing.count.toLocaleString()} medallions`;
+    }
+    
+    // Most Doubloons
+    const doubloonsEl = document.getElementById('paradeWinnerDoubloons');
+    const doubloonsDetailsEl = document.getElementById('paradeWinnerDoubloonsDetails');
+    if (doubloonsEl && winners.mostDoubloons.name) {
+        doubloonsEl.textContent = winners.mostDoubloons.name;
+        doubloonsDetailsEl.textContent = `${winners.mostDoubloons.count.toLocaleString()} doubloons`;
+    }
+    
+    // Most Stuffed Animals
+    const stuffedAnimalsEl = document.getElementById('paradeWinnerStuffedAnimals');
+    const stuffedAnimalsDetailsEl = document.getElementById('paradeWinnerStuffedAnimalsDetails');
+    if (stuffedAnimalsEl && winners.mostStuffedAnimals.name) {
+        stuffedAnimalsEl.textContent = winners.mostStuffedAnimals.name;
+        stuffedAnimalsDetailsEl.textContent = `${winners.mostStuffedAnimals.count.toLocaleString()} stuffed animals`;
+    }
+    
+    // Most Throws
+    const throwsEl = document.getElementById('paradeWinnerThrows');
+    const throwsDetailsEl = document.getElementById('paradeWinnerThrowsDetails');
+    if (throwsEl && winners.mostThrows.name) {
+        throwsEl.textContent = winners.mostThrows.name;
+        throwsDetailsEl.textContent = `${winners.mostThrows.count.toLocaleString()} throws`;
     }
 }
 

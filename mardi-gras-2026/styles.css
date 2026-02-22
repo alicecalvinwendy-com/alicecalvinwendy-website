@@ -315,17 +315,53 @@ section h3 {
 }
 
 .parade-winners {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: var(--spacing-sm);
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+/* Force 7 columns at largest breakpoint */
+@media (min-width: 1200px) {
+    .parade-winners {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.75rem;
+    }
+    
+    /* Reduce section padding for parade winners section */
+    .parade-winners-section {
+        padding: 1.5rem;
+    }
 }
 
 .parade-winner-card {
     background: linear-gradient(135deg, var(--purple-light) 0%, var(--white) 100%);
     border: 3px solid var(--purple-medium);
+    padding: 0.5rem;
 }
 
 .parade-winner-card:hover {
     border-color: var(--purple-dark);
+}
+
+.parade-winner-card .winner-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.2rem;
+}
+
+.parade-winner-card .winner-label {
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem;
+    line-height: 1.2;
+}
+
+.parade-winner-card .winner-value {
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+    line-height: 1.1;
+}
+
+.parade-winner-card .winner-subtext {
+    font-size: 0.65rem;
+    line-height: 1.2;
 }
 
 .chart-container {
@@ -461,7 +497,7 @@ section h3 {
 /* Winners Display */
 .winners-display {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: var(--spacing-md);
     padding: var(--spacing-md);
 }
@@ -470,7 +506,7 @@ section h3 {
     background: linear-gradient(135deg, var(--gold-light) 0%, var(--white) 100%);
     border: 3px solid var(--gold-medium);
     border-radius: var(--border-radius);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     text-align: center;
     transition: var(--transition);
     display: flex;

@@ -113,6 +113,56 @@
             </div>
         </section>
 
+        <!-- Parade Winners Section -->
+        <section class="parade-winners-section">
+            <h2>Parade Winners</h2>
+            <p class="section-description">Top performing parades across different categories</p>
+            <div class="winners-display parade-winners">
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">👑</div>
+                    <div class="winner-label">Most Generous</div>
+                    <div class="winner-value" id="paradeWinnerGenerous">-</div>
+                    <div class="winner-subtext" id="paradeWinnerGenerousDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">⚖️</div>
+                    <div class="winner-label">Heaviest Haul</div>
+                    <div class="winner-value" id="paradeWinnerHeaviest">-</div>
+                    <div class="winner-subtext" id="paradeWinnerHeaviestDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🎨</div>
+                    <div class="winner-label">Most Colorful</div>
+                    <div class="winner-value" id="paradeWinnerColorful">-</div>
+                    <div class="winner-subtext" id="paradeWinnerColorfulDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🥇</div>
+                    <div class="winner-label">Medallion King</div>
+                    <div class="winner-value" id="paradeWinnerMedallion">-</div>
+                    <div class="winner-subtext" id="paradeWinnerMedallionDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🪙</div>
+                    <div class="winner-label">Most Doubloons</div>
+                    <div class="winner-value" id="paradeWinnerDoubloons">-</div>
+                    <div class="winner-subtext" id="paradeWinnerDoubloonsDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🧸</div>
+                    <div class="winner-label">Most Stuffed Animals</div>
+                    <div class="winner-value" id="paradeWinnerStuffedAnimals">-</div>
+                    <div class="winner-subtext" id="paradeWinnerStuffedAnimalsDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🎁</div>
+                    <div class="winner-label">Most Throws</div>
+                    <div class="winner-value" id="paradeWinnerThrows">-</div>
+                    <div class="winner-subtext" id="paradeWinnerThrowsDetails">-</div>
+                </div>
+            </div>
+        </section>
+
         <!-- Beads by Parade Section -->
         <section class="parade-beads-section">
             <h2>Beads by Parade</h2>
@@ -164,35 +214,6 @@
                 <div class="chart-container chart-full-width">
                     <h3>Doubloons by Parade</h3>
                     <canvas id="doubloonsChart"></canvas>
-                </div>
-                <div class="chart-container chart-full-width">
-                    <h3>🏆 Parade Winners</h3>
-                    <div class="winners-display parade-winners">
-                        <div class="winner-card parade-winner-card">
-                            <div class="winner-icon">👑</div>
-                            <div class="winner-label">Most Generous</div>
-                            <div class="winner-value" id="paradeWinnerGenerous">-</div>
-                            <div class="winner-subtext" id="paradeWinnerGenerousDetails">-</div>
-                        </div>
-                        <div class="winner-card parade-winner-card">
-                            <div class="winner-icon">⚖️</div>
-                            <div class="winner-label">Heaviest Haul</div>
-                            <div class="winner-value" id="paradeWinnerHeaviest">-</div>
-                            <div class="winner-subtext" id="paradeWinnerHeaviestDetails">-</div>
-                        </div>
-                        <div class="winner-card parade-winner-card">
-                            <div class="winner-icon">🎨</div>
-                            <div class="winner-label">Most Colorful</div>
-                            <div class="winner-value" id="paradeWinnerColorful">-</div>
-                            <div class="winner-subtext" id="paradeWinnerColorfulDetails">-</div>
-                        </div>
-                        <div class="winner-card parade-winner-card">
-                            <div class="winner-icon">🥇</div>
-                            <div class="winner-label">Medallion King</div>
-                            <div class="winner-value" id="paradeWinnerMedallion">-</div>
-                            <div class="winner-subtext" id="paradeWinnerMedallionDetails">-</div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>
@@ -273,10 +294,6 @@
                     <canvas id="allItemsChart"></canvas>
                 </div>
                 <div class="chart-container chart-full-width">
-                    <h3>Stuffed Animals by Type</h3>
-                    <canvas id="stuffedAnimalsChart"></canvas>
-                </div>
-                <div class="chart-container chart-full-width">
                     <div class="chart-header">
                         <h3>Items by Parade</h3>
                         <button class="filter-toggle" onclick="toggleFilter('itemsByParadeFilter')">
@@ -292,6 +309,27 @@
                         <div class="filter-options" id="itemsByParadeFilterOptions"></div>
                     </div>
                     <canvas id="itemsByParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Stuffed Animals by Type</h3>
+                    <canvas id="stuffedAnimalsChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Stuffed Animals by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('stuffedAnimalsByParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="stuffedAnimalsByParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('stuffedAnimalsByParade')">Select All</button>
+                            <button onclick="deselectAllParades('stuffedAnimalsByParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="stuffedAnimalsByParadeFilterOptions"></div>
+                    </div>
+                    <canvas id="stuffedAnimalsByParadeChart"></canvas>
                 </div>
             </div>
         </section>
