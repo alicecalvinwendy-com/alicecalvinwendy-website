@@ -28,7 +28,16 @@
 
         <!-- Overall Statistics -->
         <section class="statistics">
-            <h2>Overall Statistics</h2>
+            <div class="section-header">
+                <h2>Overall Statistics</h2>
+                <div class="weight-unit-selector">
+                    <label for="weightUnit">Weight Unit:</label>
+                    <select id="weightUnit">
+                        <option value="grams">Grams (g)</option>
+                        <option value="pounds">Pounds (lbs)</option>
+                    </select>
+                </div>
+            </div>
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-card">
                     <div class="stat-icon">📿</div>
@@ -204,8 +213,29 @@
                     <canvas id="itemsChart"></canvas>
                 </div>
                 <div class="chart-container">
+                    <h3>🏆 Winners</h3>
+                    <div class="winners-display">
+                        <div class="winner-card">
+                            <div class="winner-icon">🎁</div>
+                            <div class="winner-label">Most Common Item</div>
+                            <div class="winner-value" id="winnerItemMost">-</div>
+                            <div class="winner-subtext" id="winnerItemMostDetails">-</div>
+                        </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">🧸</div>
+                            <div class="winner-label">Most Common Stuffed Animal</div>
+                            <div class="winner-value" id="winnerStuffedAnimal">-</div>
+                            <div class="winner-subtext" id="winnerStuffedAnimalDetails">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container chart-full-width">
                     <h3>Stuffed Animals by Type</h3>
                     <canvas id="stuffedAnimalsChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Items by Parade</h3>
+                    <canvas id="itemsByParadeChart"></canvas>
                 </div>
             </div>
         </section>
@@ -231,7 +261,7 @@
                             <tr>
                                 <th class="sortable" data-sort="color">Color</th>
                                 <th class="sortable" data-sort="count">Total Count</th>
-                                <th class="sortable" data-sort="weight">Total Weight (g)</th>
+                                <th class="sortable" data-sort="weight" id="weightColumnHeader">Total Weight (g)</th>
                                 <th class="sortable" data-sort="medallion">Medallion</th>
                                 <th class="sortable" data-sort="regular">Regular</th>
                             </tr>

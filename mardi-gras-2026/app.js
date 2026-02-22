@@ -6,6 +6,22 @@
 
 // Global state
 let charts = {};
+let weightUnit = 'grams'; // Default weight unit: 'grams' or 'pounds'
+
+// Helper function to convert grams to pounds
+function gramsToLbs(grams) {
+    return grams / 453.592; // 1 pound = 453.592 grams
+}
+
+// Helper function to format weight based on current unit
+function formatWeight(grams) {
+    if (weightUnit === 'pounds') {
+        const pounds = gramsToLbs(grams);
+        return pounds.toFixed(2) + ' lbs';
+    } else {
+        return Math.round(grams).toLocaleString() + 'g';
+    }
+}
 
 // Bead color mapping for visualization
 const BEAD_COLORS = {
@@ -30,6 +46,40 @@ const CHART_COLORS = {
     purple: '#5E2C89',
     green: '#00873D',
     gold: '#D4AF37'
+};
+
+// Helper function to generate evenly-spaced colors around the color wheel
+function generateDistinctColors(count) {
+    const colors = [];
+    const hueStep = 360 / count; // Divide color wheel evenly
+    const saturation = 70; // Keep saturation consistent for vibrancy
+    const lightness = 55; // Keep lightness consistent for readability
+    
+    for (let i = 0; i < count; i++) {
+        const hue = Math.round(i * hueStep);
+        colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+    }
+    
+    return colors;
+}
+
+// Item-specific colors for Items Distribution chart (deprecated - using dynamic colors now)
+const ITEM_COLORS = {
+    beads: '#8B5FBF',           // 270° - Purple medium - signature Mardi Gras item
+    cups: '#E91E63',            // 330° - Deep pink - festive
+    hats: '#FF5722',            // 15° - Deep orange/red - fun and bold
+    sunglasses: '#FF9800',      // 36° - Orange - bright
+    coconuts: '#FDD835',        // 54° - Yellow - natural
+    footballs: '#8BC34A',       // 88° - Light green - sports/field
+    frisbees: '#009688',        // 174° - Teal - playful
+    'stuffed animals': '#03A9F4', // 199° - Light blue - soft and cute
+    doubloons: '#2196F3',       // 207° - Blue - classic
+    toys: '#3F51B5',            // 231° - Indigo - playful energy
+    flags: '#673AB7',           // 262° - Deep purple - festive
+    banners: '#9C27B0',         // 291° - Purple - regal
+    'light up items': '#E91E63', // 330° - Magenta - glowing
+    masks: '#F44336',           // 4° - Red - mysterious masquerade
+    medallions: '#D4AF37'       // 45° - Gold - precious metal
 };
 
 // Helper function to generate repeating purple, green, gold pattern
@@ -213,6 +263,19 @@ function setupEventListeners() {
     document.querySelectorAll('.sortable').forEach(header => {
         header.addEventListener('click', () => sortTable(header));
     });
+    
+    // Weight unit selector
+    const weightUnitSelector = document.getElementById('weightUnit');
+    if (weightUnitSelector) {
+        weightUnitSelector.addEventListener('change', (e) => {
+            weightUnit = e.target.value;
+            // Re-render all weight-related displays
+            renderStatistics();
+            updateBeadCharts();
+            renderParadeBeadCharts();
+            renderTables();
+        });
+    }
 }
 
 // ========================================
@@ -304,7 +367,7 @@ function renderStatistics() {
     const stats = calculateStatistics();
     
     document.getElementById('totalBeadsCount').textContent = stats.totalBeadsCount.toLocaleString();
-    document.getElementById('totalBeadsWeight').textContent = stats.totalBeadsWeight.toLocaleString() + 'g';
+    document.getElementById('totalBeadsWeight').textContent = formatWeight(stats.totalBeadsWeight);
     document.getElementById('totalDoubloons').textContent = stats.totalDoubloons.toLocaleString();
     document.getElementById('totalItems').textContent = stats.totalItems.toLocaleString();
     document.getElementById('totalStuffedAnimals').textContent = stats.totalStuffedAnimals.toLocaleString();
@@ -352,7 +415,31 @@ function renderWinners() {
     
     if (weightWinnerEl && weightWinner) {
         weightWinnerEl.textContent = weightWinner.charAt(0).toUpperCase() + weightWinner.slice(1);
-        weightDetailsEl.textContent = `${maxWeight.toLocaleString()}g`;
+        weightDetailsEl.textContent = formatWeight(maxWeight);
+    }
+}
+
+function renderItemsWinners() {
+    const winners = getItemsWinners();
+    
+    // Display most common item
+    const itemWinnerEl = document.getElementById('winnerItemMost');
+    const itemDetailsEl = document.getElementById('winnerItemMostDetails');
+    
+    if (itemWinnerEl && winners.mostCommonItem.name) {
+        const itemName = winners.mostCommonItem.name.charAt(0).toUpperCase() + winners.mostCommonItem.name.slice(1);
+        itemWinnerEl.textContent = itemName;
+        itemDetailsEl.textContent = `${winners.mostCommonItem.count.toLocaleString()} items`;
+    }
+    
+    // Display most common stuffed animal
+    const animalWinnerEl = document.getElementById('winnerStuffedAnimal');
+    const animalDetailsEl = document.getElementById('winnerStuffedAnimalDetails');
+    
+    if (animalWinnerEl && winners.mostCommonAnimal.name) {
+        const animalName = winners.mostCommonAnimal.name.replace(/([A-Z])/g, ' $1').trim();
+        animalWinnerEl.textContent = animalName.charAt(0).toUpperCase() + animalName.slice(1);
+        animalDetailsEl.textContent = `${winners.mostCommonAnimal.count.toLocaleString()} caught`;
     }
 }
 
@@ -618,6 +705,67 @@ function getItemsData() {
     return data;
 }
 
+function getItemsWinners() {
+    const itemsData = getItemsData();
+    
+    // Find most common item
+    let maxItemCount = 0;
+    let mostCommonItem = '';
+    
+    Object.entries(itemsData).forEach(([item, count]) => {
+        if (count > maxItemCount) {
+            maxItemCount = count;
+            mostCommonItem = item;
+        }
+    });
+    
+    // Find most common stuffed animal
+    const typeData = mardiGrasData.throws.stuffedAnimals.type;
+    let maxAnimalCount = 0;
+    let mostCommonAnimal = '';
+    
+    Object.entries(typeData).forEach(([type, data]) => {
+        if (data.count > maxAnimalCount) {
+            maxAnimalCount = data.count;
+            mostCommonAnimal = type;
+        }
+    });
+    
+    return {
+        mostCommonItem: { name: mostCommonItem, count: maxItemCount },
+        mostCommonAnimal: { name: mostCommonAnimal, count: maxAnimalCount }
+    };
+}
+
+function getItemsByParadeData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    // Get all item types
+    const itemTypes = Object.keys(mardiGrasData.throws.items);
+    
+    // Build dataset for each item type
+    const datasets = itemTypes.map(itemType => {
+        const data = parades.map(parade => {
+            return mardiGrasData.throws.items[itemType][parade]?.count || 0;
+        });
+        return {
+            label: itemType.charAt(0).toUpperCase() + itemType.slice(1),
+            data: data
+        };
+    });
+    
+    return {
+        labels: paradeLabels,
+        datasets: datasets,
+        itemTypes: itemTypes
+    };
+}
+
 function getDoubloonsData() {
     const data = {};
     mardiGrasData.parades.forEach(parade => {
@@ -815,7 +963,9 @@ function renderAllVisualizations() {
     
     // Other sections
     renderItemsChart();
+    renderItemsWinners();
     renderStuffedAnimalsChart();
+    renderItemsByParadeChart();
     renderSpecialsChart();
     
     // Tables
@@ -919,8 +1069,21 @@ function renderBeadCountChart(beadData) {
 function renderBeadWeightChart(beadData) {
     const ctx = document.getElementById('beadWeightChart');
     const labels = Object.keys(beadData);
-    const data = labels.map(color => beadData[color].weight);
+    const dataInGrams = labels.map(color => beadData[color].weight);
+    
+    // Convert data based on weight unit
+    const data = weightUnit === 'pounds' 
+        ? dataInGrams.map(g => gramsToLbs(g))
+        : dataInGrams;
+    
     const colors = labels.map(color => BEAD_COLORS[color] || '#999');
+    
+    // Determine unit label and formatter
+    const unitLabel = weightUnit === 'pounds' ? 'lbs' : 'g';
+    const unitText = weightUnit === 'pounds' ? 'Weight (pounds)' : 'Weight (grams)';
+    const formatter = weightUnit === 'pounds' 
+        ? (value) => value.toFixed(2) + ' lbs'
+        : (value) => Math.round(value) + 'g';
 
     if (charts.beadWeight) charts.beadWeight.destroy();
     
@@ -945,20 +1108,23 @@ function renderBeadWeightChart(beadData) {
                     weight: 'bold',
                     size: 12
                 },
-                formatter: (value) => value + 'g'
+                formatter: formatter
             },
             tooltip: {
                 callbacks: {
-                    label: (context) => `Weight: ${context.parsed.y}g`
+                    label: (context) => `Weight: ${formatter(context.parsed.y)}`
                 }
             }
         },
         scales: {
             y: { 
                 beginAtZero: true, 
-                title: { display: true, text: 'Weight (grams)' },
+                title: { display: true, text: unitText },
                 ticks: {
-                    padding: 5
+                    padding: 5,
+                    callback: function(value) {
+                        return weightUnit === 'pounds' ? value.toFixed(2) : Math.round(value);
+                    }
                 }
             },
             x: {
@@ -974,7 +1140,7 @@ function renderBeadWeightChart(beadData) {
         data: {
             labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
             datasets: [{
-                label: 'Weight (g)',
+                label: `Weight (${unitLabel})`,
                 data: data,
                 backgroundColor: colors,
                 borderColor: colors.map(c => getBorderColor(c)),
@@ -1185,7 +1351,9 @@ function renderItemsChart() {
     const labels = Object.keys(itemsData);
     const data = Object.values(itemsData);
     const total = data.reduce((sum, val) => sum + val, 0);
-    const colors = generateColorPattern(labels.length);
+    
+    // Generate evenly-spaced distinct colors for all items
+    const colors = generateDistinctColors(labels.length);
 
     if (charts.items) charts.items.destroy();
     
@@ -1214,18 +1382,26 @@ function renderItemsChart() {
                     weight: 'bold',
                     size: 12
                 },
-                formatter: (value) => value
+                formatter: (value, context) => {
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return percentage > 3 ? percentage + '%' : ''; // Only show if > 3%
+                }
             },
             tooltip: {
                 callbacks: {
-                    label: (context) => `${context.label}: ${context.parsed}`
+                    label: (context) => {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
                 }
             }
         }
     };
     
     charts.items = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
             datasets: [{
@@ -1252,11 +1428,12 @@ function renderStuffedAnimalsChart() {
     const baseOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
         layout: {
             padding: {
                 left: 10,
-                right: 10,
-                top: 30,
+                right: 50,
+                top: 10,
                 bottom: 10
             }
         },
@@ -1264,7 +1441,7 @@ function renderStuffedAnimalsChart() {
             legend: { display: false },
             datalabels: {
                 anchor: 'end',
-                align: 'top',
+                align: 'right',
                 color: '#2D1B4E',
                 font: {
                     weight: 'bold',
@@ -1274,7 +1451,7 @@ function renderStuffedAnimalsChart() {
             }
         },
         scales: {
-            y: { 
+            x: { 
                 beginAtZero: true, 
                 title: { display: true, text: 'Count' },
                 ticks: {
@@ -1283,7 +1460,7 @@ function renderStuffedAnimalsChart() {
                     precision: 0
                 }
             },
-            x: {
+            y: {
                 ticks: {
                     padding: 5
                 }
@@ -1302,6 +1479,90 @@ function renderStuffedAnimalsChart() {
                 borderColor: colors,
                 borderWidth: 2
             }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderItemsByParadeChart() {
+    const ctx = document.getElementById('itemsByParadeChart');
+    if (!ctx) return;
+    
+    const itemsByParadeData = getItemsByParadeData();
+    const { labels, datasets, itemTypes } = itemsByParadeData;
+    
+    // Generate distinct colors for each item type
+    const itemColors = generateDistinctColors(itemTypes.length);
+    
+    // Map colors to datasets
+    const coloredDatasets = datasets.map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: itemColors[index],
+        borderColor: itemColors[index],
+        borderWidth: 1
+    }));
+    
+    if (charts.itemsByParade) charts.itemsByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                display: false // Don't show individual values on stacked segments
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.x;
+                        return value > 0 ? `${label}: ${value}` : '';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Item Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 5,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.itemsByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: coloredDatasets
         },
         options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
@@ -1679,7 +1940,8 @@ function renderUnaffiliatedSizeChart() {
         return;
     }
     
-    const colors = generateColorPattern(filteredLabels.length);
+    // Generate evenly-spaced distinct colors for all shapes
+    const colors = generateDistinctColors(filteredLabels.length);
     
     if (charts.unaffiliatedSize) charts.unaffiliatedSize.destroy();
     
@@ -2046,11 +2308,24 @@ function renderBeadWeightByParadeChart() {
     const ctx = document.getElementById('beadWeightByParadeChart');
     if (!ctx) return;
     
-    const data = getBeadWeightByParade();
-    const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+    const dataInGrams = getBeadWeightByParade();
+    const sorted = Object.entries(dataInGrams).sort((a, b) => b[1] - a[1]);
     const labels = sorted.map(([parade]) => parade);
-    const values = sorted.map(([, weight]) => weight);
+    const valuesInGrams = sorted.map(([, weight]) => weight);
+    
+    // Convert values based on weight unit
+    const values = weightUnit === 'pounds'
+        ? valuesInGrams.map(g => gramsToLbs(g))
+        : valuesInGrams;
+    
     const colors = generateColorPattern(labels.length);
+    
+    // Determine unit label and formatter
+    const unitLabel = weightUnit === 'pounds' ? 'lbs' : 'g';
+    const unitText = weightUnit === 'pounds' ? 'Weight (pounds)' : 'Weight (grams)';
+    const formatter = weightUnit === 'pounds' 
+        ? (value) => value.toFixed(2) + ' lbs'
+        : (value) => Math.round(value).toLocaleString() + 'g';
     
     if (charts.beadWeightByParade) charts.beadWeightByParade.destroy();
     
@@ -2068,14 +2343,19 @@ function renderBeadWeightByParadeChart() {
                 align: 'right',
                 color: '#2D1B4E',
                 font: { weight: 'bold', size: 11 },
-                formatter: (value) => value.toLocaleString() + 'g'
+                formatter: formatter
             }
         },
         scales: {
             x: { 
                 beginAtZero: true,
-                title: { display: true, text: 'Weight (grams)' },
-                ticks: { padding: 5 }
+                title: { display: true, text: unitText },
+                ticks: { 
+                    padding: 5,
+                    callback: function(value) {
+                        return weightUnit === 'pounds' ? value.toFixed(2) : Math.round(value);
+                    }
+                }
             },
             y: {
                 ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
@@ -2088,7 +2368,7 @@ function renderBeadWeightByParadeChart() {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Bead Weight',
+                label: `Bead Weight (${unitLabel})`,
                 data: values,
                 backgroundColor: colors,
                 borderColor: colors,
@@ -2150,7 +2430,25 @@ function renderColorDistributionByParadeChart() {
                 position: isMobileView() ? 'bottom' : 'right',
                 labels: { padding: 8, boxWidth: 12, font: { size: 10 } }
             },
-            datalabels: { display: false }
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : '',
+                anchor: 'center',
+                align: 'center'
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.x;
+                        return value > 0 ? `${label}: ${value}` : '';
+                    }
+                }
+            }
         },
         scales: {
             x: {
@@ -2172,7 +2470,8 @@ function renderColorDistributionByParadeChart() {
             labels: paradeLabels,
             datasets: datasets
         },
-        options: mergeChartOptions(baseOptions)
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
     });
 }
 
@@ -2192,7 +2491,7 @@ function renderParadeWinners() {
     const heaviestDetailsEl = document.getElementById('paradeWinnerHeaviestDetails');
     if (heaviestEl && winners.heaviest.name) {
         heaviestEl.textContent = winners.heaviest.name;
-        heaviestDetailsEl.textContent = `${winners.heaviest.weight.toLocaleString()}g`;
+        heaviestDetailsEl.textContent = formatWeight(winners.heaviest.weight);
     }
     
     // Most Colorful
@@ -2217,8 +2516,18 @@ function renderParadeWinners() {
 // ========================================
 
 function renderTables() {
+    updateWeightHeaders();
     renderBeadsTable();
     renderThrowsTable();
+}
+
+function updateWeightHeaders() {
+    const headerEl = document.getElementById('weightColumnHeader');
+    if (headerEl) {
+        headerEl.textContent = weightUnit === 'pounds' 
+            ? 'Total Weight (lbs)' 
+            : 'Total Weight (g)';
+    }
 }
 
 function renderBeadsTable() {
@@ -2234,7 +2543,7 @@ function renderBeadsTable() {
                     ${color.charAt(0).toUpperCase() + color.slice(1)}
                 </td>
                 <td>${data.count.toLocaleString()}</td>
-                <td>${data.weight.toLocaleString()}</td>
+                <td>${formatWeight(data.weight)}</td>
                 <td>${data.medallion.count.toLocaleString()}</td>
                 <td>${data.regular.count.toLocaleString()}</td>
             </tr>
