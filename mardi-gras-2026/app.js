@@ -1397,11 +1397,12 @@ function renderMedallionVsRegularByColorChart() {
     const baseOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        indexAxis: 'y',
         layout: {
             padding: {
                 left: 10,
-                right: 10,
-                top: 30,
+                right: 50,
+                top: 10,
                 bottom: 10
             }
         },
@@ -1423,23 +1424,24 @@ function renderMedallionVsRegularByColorChart() {
             },
             tooltip: {
                 callbacks: {
-                    label: (context) => `${context.dataset.label}: ${context.parsed.y}`
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
                 }
             }
         },
         scales: {
             x: {
                 stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
                 ticks: {
                     padding: 5
                 }
             },
             y: { 
                 stacked: true,
-                beginAtZero: true,
-                title: { display: true, text: 'Count' },
                 ticks: {
-                    padding: 5
+                    padding: 10,
+                    autoSkip: false
                 }
             }
         }
