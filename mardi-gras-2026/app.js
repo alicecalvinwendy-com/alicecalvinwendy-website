@@ -270,6 +270,25 @@ function mergeChartOptions(baseOptions) {
     return deepMerge(baseOptions, mobileOptions);
 }
 
+// Helper function to calculate dynamic chart height based on number of data points
+function calculateChartHeight(dataPointCount, options = {}) {
+    const {
+        orientation = 'vertical',    // 'vertical' or 'horizontal'
+        pixelsPerBar = isMobileView() ? 28 : 30,  // 25-30px for comfortable spacing
+        baseHeight = 150,            // For padding, title, axis labels, legend
+        minHeight = 300              // Minimum height for small datasets
+    } = options;
+    
+    if (orientation === 'horizontal') {
+        // For horizontal bars, height is determined by number of categories
+        const calculated = (dataPointCount * pixelsPerBar) + baseHeight;
+        return Math.max(calculated, minHeight);
+    }
+    
+    // For vertical charts, use fixed minHeight (fewer data points typically)
+    return minHeight;
+}
+
 // ========================================
 // Chart.js Plugins
 // ========================================
@@ -1417,6 +1436,7 @@ function updateBeadCharts() {
 
 function renderBeadCountChart(beadData) {
     const ctx = document.getElementById('beadCountChart');
+    if (!ctx) return;
     
     // Sort by count (largest to smallest)
     const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].count - a[1].count);
@@ -1478,6 +1498,7 @@ function renderBeadCountChart(beadData) {
             datasets: [{
                 label: 'Count',
                 data: data,
+                maxBarThickness: isMobileView() ? 40 : 50,
                 backgroundColor: colors,
                 borderColor: colors.map(c => getBorderColor(c)),
                 borderWidth: 2
@@ -1490,6 +1511,7 @@ function renderBeadCountChart(beadData) {
 
 function renderBeadWeightChart(beadData) {
     const ctx = document.getElementById('beadWeightChart');
+    if (!ctx) return;
     
     // Sort by weight (largest to smallest)
     const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].weight - a[1].weight);
@@ -1567,6 +1589,7 @@ function renderBeadWeightChart(beadData) {
             datasets: [{
                 label: `Weight (${unitLabel})`,
                 data: data,
+                maxBarThickness: isMobileView() ? 40 : 50,
                 backgroundColor: colors,
                 borderColor: colors.map(c => getBorderColor(c)),
                 borderWidth: 2
@@ -1579,6 +1602,7 @@ function renderBeadWeightChart(beadData) {
 
 function renderBeadPercentageChart(beadData) {
     const ctx = document.getElementById('beadPercentageChart');
+    if (!ctx) return;
     
     // Sort by count (largest to smallest)
     const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].count - a[1].count);
@@ -1658,6 +1682,7 @@ function renderBeadPercentageChart(beadData) {
 
 function renderBeadTypesByParadeChart() {
     const ctx = document.getElementById('beadTypesByParadeChart');
+    if (!ctx) return;
     
     // Get parades to display
     const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
@@ -1688,6 +1713,17 @@ function renderBeadTypesByParadeChart() {
         });
         return total;
     });
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(paradeLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
     
     if (charts.beadTypesByParade) charts.beadTypesByParade.destroy();
     
@@ -1739,6 +1775,8 @@ function renderBeadTypesByParadeChart() {
             },
             y: {
                 stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 10,
                     autoSkip: false,
@@ -1778,6 +1816,8 @@ function renderBeadTypesByParadeChart() {
 
 function renderItemsChart() {
     const ctx = document.getElementById('itemsChart');
+    if (!ctx) return;
+    
     const itemsData = getItemsData();
     
     // Sort by count (largest to smallest)
@@ -1793,7 +1833,8 @@ function renderItemsChart() {
     
     const baseOptions = {
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
         layout: {
             padding: {
                 left: 20,
@@ -1856,6 +1897,8 @@ function renderItemsChart() {
 
 function renderStuffedAnimalsChart() {
     const ctx = document.getElementById('stuffedAnimalsChart');
+    if (!ctx) return;
+    
     const stuffedAnimalCategories = mardiGrasData.throws['Stuffed Animals'];
     const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
     
@@ -1876,6 +1919,17 @@ function renderStuffedAnimalsChart() {
     const labels = sortedEntries.map(([category]) => category);
     const data = sortedEntries.map(([, count]) => count);
     const colors = generateColorPattern(labels.length);
+
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
 
     if (charts.stuffedAnimals) charts.stuffedAnimals.destroy();
     
@@ -1915,6 +1969,8 @@ function renderStuffedAnimalsChart() {
                 }
             },
             y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 5
                 }
@@ -1950,16 +2006,15 @@ function renderAllItemsChart() {
     const labels = sortedEntries.map(([item]) => item);
     const data = sortedEntries.map(([, count]) => count);
     
-    // Calculate dynamic height based on number of items
-    // Each bar needs ~25px for tight spacing
-    const minHeightPerBar = 25;
-    const baseHeight = 150; // For padding, title, axis labels, etc.
-    const calculatedHeight = Math.max(400, (labels.length * minHeightPerBar) + baseHeight);
-    
-    // Set the container height dynamically
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
     const container = ctx.parentElement;
     if (container) {
-        container.style.height = `${calculatedHeight}px`;
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
     }
     
     // Generate distinct colors for all items
@@ -2005,18 +2060,14 @@ function renderAllItemsChart() {
                 }
             },
             y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 5,
                     font: {
                         size: labelFontSize
                     }
                 }
-            }
-        },
-        datasets: {
-            bar: {
-                barPercentage: 0.95, // Increase to reduce gap between bars
-                categoryPercentage: 0.95 // Increase to reduce gap between bars
             }
         }
     };
@@ -2085,6 +2136,17 @@ function renderItemsByParadeChart() {
         data: filteredIndices.map(item => dataset.data[item.index])
     }));
     
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
+    
     // Generate distinct colors for each item type
     const itemColors = generateDistinctColors(itemTypes.length);
     
@@ -2144,6 +2206,8 @@ function renderItemsByParadeChart() {
             },
             y: {
                 stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 5
                 }
@@ -2208,6 +2272,17 @@ function renderStuffedAnimalsByParadeChart() {
         data: filteredIndices.map(item => dataset.data[item.index])
     }));
     
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
+    
     // Generate distinct colors for each category
     const categoryColors = generateDistinctColors(categories.length);
     
@@ -2267,6 +2342,8 @@ function renderStuffedAnimalsByParadeChart() {
             },
             y: {
                 stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 5
                 }
@@ -2287,12 +2364,25 @@ function renderStuffedAnimalsByParadeChart() {
 
 function renderSpecialsChart() {
     const ctx = document.getElementById('specialsChart');
+    if (!ctx) return;
+    
     const specialsData = mardiGrasData.throws.specials.items;
     
     // Sort by count (largest to smallest)
     const sortedEntries = Object.entries(specialsData).sort((a, b) => b[1].count - a[1].count);
     const labels = sortedEntries.map(([item]) => item);
     const data = sortedEntries.map(([, value]) => value.count);
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
     
     // Generate color pattern
     const colors = labels.map((_, index) => {
@@ -2338,6 +2428,8 @@ function renderSpecialsChart() {
                 }
             },
             y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 10,
                     autoSkip: false
@@ -2365,6 +2457,8 @@ function renderSpecialsChart() {
 
 function renderDoubloonsChart() {
     const ctx = document.getElementById('doubloonsChart');
+    if (!ctx) return;
+    
     const doubloonsData = getDoubloonsData();
     
     // Sort by count (largest to smallest)
@@ -2373,6 +2467,17 @@ function renderDoubloonsChart() {
     const data = sortedEntries.map(([, count]) => count);
     const isHorizontal = true; // Always horizontal since we show all parades
     const colors = generateColorPattern(labels.length);
+
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
 
     if (charts.doubloons) charts.doubloons.destroy();
     
@@ -2412,6 +2517,8 @@ function renderDoubloonsChart() {
                 }
             },
             [isHorizontal ? 'y' : 'x']: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 10,
                     autoSkip: false
@@ -2463,6 +2570,17 @@ function renderMedallionVsRegularByColorChart() {
     const medallionCounts = sortedEntries.map(([, data]) => data.medallion.count);
     const regularCounts = sortedEntries.map(([, data]) => data.regular.count);
     const colors = labels.map(color => BEAD_COLORS[color] || '#999');
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
     
     if (charts.medallionVsRegularColor) charts.medallionVsRegularColor.destroy();
     
@@ -2517,6 +2635,8 @@ function renderMedallionVsRegularByColorChart() {
             },
             y: { 
                 stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 10,
                     autoSkip: false
@@ -2591,6 +2711,17 @@ function renderMedallionVsRegularByParadeChart() {
     const filteredMedallionData = filteredIndices.map(item => sortedMedallionData[item.index]);
     const filteredRegularData = filteredIndices.map(item => sortedRegularData[item.index]);
     
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
+    
     if (charts.medallionVsRegularParade) charts.medallionVsRegularParade.destroy();
     
     const baseOptions = {
@@ -2644,6 +2775,8 @@ function renderMedallionVsRegularByParadeChart() {
             },
             y: {
                 stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: {
                     padding: 10,
                     autoSkip: false,
@@ -2683,7 +2816,7 @@ function renderMedallionVsRegularByParadeChart() {
 
 function renderUnaffiliatedSizeChart() {
     const ctx = document.getElementById('unaffiliatedSizeChart');
-    if (!ctx) return; // Chart element doesn't exist yet
+    if (!ctx) return;
     
     const sizeData = getUnaffiliatedSizeData();
     
@@ -2718,7 +2851,8 @@ function renderUnaffiliatedSizeChart() {
     
     const baseOptions = {
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
         layout: {
             padding: {
                 left: 20,
@@ -2844,6 +2978,17 @@ function renderUnaffiliatedColorBySubtypeChart() {
     
     if (charts.unaffiliatedColorBySubtype) charts.unaffiliatedColorBySubtype.destroy();
     
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
+    
     const baseOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -2885,6 +3030,8 @@ function renderUnaffiliatedColorBySubtypeChart() {
             },
             y: {
                 stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
             }
         }
@@ -3073,6 +3220,17 @@ function renderBeadCountByParadeChart() {
     const values = sorted.map(([, count]) => count);
     const colors = generateColorPattern(labels.length);
     
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
+    
     if (charts.beadCountByParade) charts.beadCountByParade.destroy();
     
     const baseOptions = {
@@ -3099,6 +3257,8 @@ function renderBeadCountByParadeChart() {
                 ticks: { padding: 5 }
             },
             y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
             }
         }
@@ -3144,6 +3304,17 @@ function renderBeadWeightByParadeChart() {
         ? (value) => value.toFixed(2) + ' lbs'
         : (value) => Math.round(value).toLocaleString() + 'g';
     
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
+    
     if (charts.beadWeightByParade) charts.beadWeightByParade.destroy();
     
     const baseOptions = {
@@ -3175,6 +3346,8 @@ function renderBeadWeightByParadeChart() {
                 }
             },
             y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
                 ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
             }
         }
@@ -3247,6 +3420,17 @@ function renderColorDistributionByParadeChart() {
         };
     });
     
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(paradeLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${height}px`;
+        container.style.maxHeight = 'none';
+    }
+    
     if (charts.colorDistributionByParade) charts.colorDistributionByParade.destroy();
     
     const baseOptions = {
@@ -3294,7 +3478,9 @@ function renderColorDistributionByParadeChart() {
             },
             y: {
                 stacked: true,
-                ticks: { padding: 10, autoSkip: false, font: { size: 10 } }
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
             }
         }
     };
