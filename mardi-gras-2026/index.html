@@ -120,11 +120,37 @@
             
             <div class="charts-grid parade-beads-grid">
                 <div class="chart-container chart-full-width">
-                    <h3>Bead Color Distribution by Parade</h3>
+                    <div class="chart-header">
+                        <h3>Bead Color Distribution by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('colorDistributionByParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="colorDistributionByParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('colorDistributionByParade')">Select All</button>
+                            <button onclick="deselectAllParades('colorDistributionByParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="colorDistributionByParadeFilterOptions"></div>
+                    </div>
                     <canvas id="colorDistributionByParadeChart"></canvas>
                 </div>
                 <div class="chart-container chart-full-width">
-                    <h3>Medallion vs Regular by Parade</h3>
+                    <div class="chart-header">
+                        <h3>Medallion vs Regular by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('medallionVsRegularParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="medallionVsRegularParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('medallionVsRegularParade')">Select All</button>
+                            <button onclick="deselectAllParades('medallionVsRegularParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="medallionVsRegularParadeFilterOptions"></div>
+                    </div>
                     <canvas id="medallionVsRegularParadeChart"></canvas>
                 </div>
                 <div class="chart-container">
@@ -198,7 +224,20 @@
                     </div>
                 </div>
                 <div class="chart-container chart-full-width">
-                    <h3>Color Breakdown by Shape</h3>
+                    <div class="chart-header">
+                        <h3>Color Breakdown by Shape</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('unaffiliatedColorBySubtypeFilter')">
+                            <span>Filter Shapes</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="unaffiliatedColorBySubtypeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllShapes()">Select All</button>
+                            <button onclick="deselectAllShapes()">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="unaffiliatedColorBySubtypeFilterOptions"></div>
+                    </div>
                     <canvas id="unaffiliatedColorBySubtypeChart"></canvas>
                 </div>
             </div>
@@ -234,7 +273,20 @@
                     <canvas id="stuffedAnimalsChart"></canvas>
                 </div>
                 <div class="chart-container chart-full-width">
-                    <h3>Items by Parade</h3>
+                    <div class="chart-header">
+                        <h3>Items by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('itemsByParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="itemsByParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('itemsByParade')">Select All</button>
+                            <button onclick="deselectAllParades('itemsByParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="itemsByParadeFilterOptions"></div>
+                    </div>
                     <canvas id="itemsByParadeChart"></canvas>
                 </div>
             </div>

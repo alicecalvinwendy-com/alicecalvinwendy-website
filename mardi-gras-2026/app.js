@@ -9,6 +9,14 @@
 let charts = {};
 let weightUnit = 'grams'; // Default weight unit: 'grams' or 'pounds'
 
+// Filter state
+let filters = {
+    colorDistributionByParade: new Set(),
+    medallionVsRegularParade: new Set(),
+    itemsByParade: new Set(),
+    unaffiliatedColorBySubtype: new Set()
+};
+
 // Helper function to convert grams to pounds
 function gramsToLbs(grams) {
     return grams / 453.592; // 1 pound = 453.592 grams
@@ -303,6 +311,144 @@ const minBarLengthPlugin = {
         });
     }
 };
+
+// ========================================
+// Filter Functions
+// ========================================
+
+function toggleFilter(filterId) {
+    const filterPanel = document.getElementById(filterId);
+    const button = filterPanel.previousElementSibling.querySelector('.filter-toggle');
+    
+    if (filterPanel.classList.contains('open')) {
+        filterPanel.classList.remove('open');
+        button.classList.remove('active');
+    } else {
+        filterPanel.classList.add('open');
+        button.classList.add('active');
+    }
+}
+
+function initializeParadeFilters(chartId, parades) {
+    const filterOptionsEl = document.getElementById(`${chartId}FilterOptions`);
+    if (!filterOptionsEl) return;
+    
+    // Initialize all parades as selected
+    filters[chartId] = new Set(parades);
+    
+    filterOptionsEl.innerHTML = parades.map(parade => `
+        <div class="filter-option">
+            <input type="checkbox" id="${chartId}-${parade}" value="${parade}" checked 
+                   onchange="onParadeFilterChange('${chartId}', '${parade}', this.checked)">
+            <label for="${chartId}-${parade}">${parade}</label>
+        </div>
+    `).join('');
+}
+
+function onParadeFilterChange(chartId, parade, checked) {
+    if (checked) {
+        filters[chartId].add(parade);
+    } else {
+        filters[chartId].delete(parade);
+    }
+    
+    // Re-render the appropriate chart
+    if (chartId === 'colorDistributionByParade') {
+        renderColorDistributionByParadeChart();
+    } else if (chartId === 'medallionVsRegularParade') {
+        renderMedallionVsRegularByParadeChart();
+    } else if (chartId === 'itemsByParade') {
+        renderItemsByParadeChart();
+    }
+}
+
+function selectAllParades(chartId) {
+    const filterOptionsEl = document.getElementById(`${chartId}FilterOptions`);
+    const checkboxes = filterOptionsEl.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        filters[chartId].add(checkbox.value);
+    });
+    
+    // Re-render the appropriate chart
+    if (chartId === 'colorDistributionByParade') {
+        renderColorDistributionByParadeChart();
+    } else if (chartId === 'medallionVsRegularParade') {
+        renderMedallionVsRegularByParadeChart();
+    } else if (chartId === 'itemsByParade') {
+        renderItemsByParadeChart();
+    }
+}
+
+function deselectAllParades(chartId) {
+    const filterOptionsEl = document.getElementById(`${chartId}FilterOptions`);
+    const checkboxes = filterOptionsEl.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        filters[chartId].delete(checkbox.value);
+    });
+    
+    // Re-render the appropriate chart
+    if (chartId === 'colorDistributionByParade') {
+        renderColorDistributionByParadeChart();
+    } else if (chartId === 'medallionVsRegularParade') {
+        renderMedallionVsRegularByParadeChart();
+    } else if (chartId === 'itemsByParade') {
+        renderItemsByParadeChart();
+    }
+}
+
+function initializeShapeFilters(shapes) {
+    const filterOptionsEl = document.getElementById('unaffiliatedColorBySubtypeFilterOptions');
+    if (!filterOptionsEl) return;
+    
+    // Initialize all shapes as selected
+    filters.unaffiliatedColorBySubtype = new Set(shapes.map(s => s.key));
+    
+    filterOptionsEl.innerHTML = shapes.map(shape => `
+        <div class="filter-option">
+            <input type="checkbox" id="shape-${shape.key}" value="${shape.key}" checked 
+                   onchange="onShapeFilterChange('${shape.key}', this.checked)">
+            <label for="shape-${shape.key}">${shape.label}</label>
+        </div>
+    `).join('');
+}
+
+function onShapeFilterChange(shapeKey, checked) {
+    if (checked) {
+        filters.unaffiliatedColorBySubtype.add(shapeKey);
+    } else {
+        filters.unaffiliatedColorBySubtype.delete(shapeKey);
+    }
+    
+    renderUnaffiliatedColorBySubtypeChart();
+}
+
+function selectAllShapes() {
+    const filterOptionsEl = document.getElementById('unaffiliatedColorBySubtypeFilterOptions');
+    const checkboxes = filterOptionsEl.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        filters.unaffiliatedColorBySubtype.add(checkbox.value);
+    });
+    
+    renderUnaffiliatedColorBySubtypeChart();
+}
+
+function deselectAllShapes() {
+    const filterOptionsEl = document.getElementById('unaffiliatedColorBySubtypeFilterOptions');
+    const checkboxes = filterOptionsEl.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        filters.unaffiliatedColorBySubtype.delete(checkbox.value);
+    });
+    
+    renderUnaffiliatedColorBySubtypeChart();
+}
 
 // ========================================
 // Initialization
@@ -1609,11 +1755,33 @@ function renderItemsByParadeChart() {
     const itemsByParadeData = getItemsByParadeData();
     const { labels, datasets, itemTypes } = itemsByParadeData;
     
+    // Initialize filters if not yet initialized
+    if (filters.itemsByParade.size === 0) {
+        initializeParadeFilters('itemsByParade', labels);
+    }
+    
+    // Apply filters
+    const filteredIndices = labels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.itemsByParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.itemsByParade) charts.itemsByParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredDatasets = datasets.map(dataset => ({
+        ...dataset,
+        data: filteredIndices.map(item => dataset.data[item.index])
+    }));
+    
     // Generate distinct colors for each item type
     const itemColors = generateDistinctColors(itemTypes.length);
     
     // Map colors to datasets
-    const coloredDatasets = datasets.map((dataset, index) => ({
+    const coloredDatasets = filteredDatasets.map((dataset, index) => ({
         ...dataset,
         backgroundColor: itemColors[index],
         borderColor: itemColors[index],
@@ -1678,7 +1846,7 @@ function renderItemsByParadeChart() {
     charts.itemsByParade = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: filteredLabels,
             datasets: coloredDatasets
         },
         options: mergeChartOptions(baseOptions),
@@ -1947,6 +2115,26 @@ function renderMedallionVsRegularByParadeChart() {
     
     const { paradeLabels, medallionData, regularData } = getBeadDataByType();
     
+    // Initialize filters if not yet initialized
+    if (filters.medallionVsRegularParade.size === 0) {
+        initializeParadeFilters('medallionVsRegularParade', paradeLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = paradeLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.medallionVsRegularParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.medallionVsRegularParade) charts.medallionVsRegularParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredMedallionData = filteredIndices.map(item => medallionData[item.index]);
+    const filteredRegularData = filteredIndices.map(item => regularData[item.index]);
+    
     if (charts.medallionVsRegularParade) charts.medallionVsRegularParade.destroy();
     
     const baseOptions = {
@@ -2014,18 +2202,18 @@ function renderMedallionVsRegularByParadeChart() {
     charts.medallionVsRegularParade = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: paradeLabels,
+            labels: filteredLabels,
             datasets: [
                 {
                     label: 'Regular Beads',
-                    data: regularData,
+                    data: filteredRegularData,
                     backgroundColor: CHART_COLORS.purple,
                     borderColor: CHART_COLORS.purple,
                     borderWidth: 2
                 },
                 {
                     label: 'Medallion Beads',
-                    data: medallionData,
+                    data: filteredMedallionData,
                     backgroundColor: CHART_COLORS.gold,
                     borderColor: CHART_COLORS.gold,
                     borderWidth: 2
@@ -2033,7 +2221,7 @@ function renderMedallionVsRegularByParadeChart() {
             ]
         },
         options: mergeChartOptions(baseOptions),
-        plugins: [ChartDataLabels]
+        plugins: [ChartDataLabels, minBarLengthPlugin]
     });
 }
 
@@ -2151,9 +2339,29 @@ function renderUnaffiliatedColorBySubtypeChart() {
         return;
     }
     
-    // Get all unique colors across all subtypes
+    // Initialize filters if not yet initialized
+    if (filters.unaffiliatedColorBySubtype.size === 0) {
+        const shapes = activeSubtypes.map((key, index) => ({ key, label: activeLabels[index] }));
+        initializeShapeFilters(shapes);
+    }
+    
+    // Apply filters
+    const filteredIndices = activeSubtypes
+        .map((key, index) => ({ key, label: activeLabels[index], index }))
+        .filter(item => filters.unaffiliatedColorBySubtype.has(item.key));
+    
+    // If no shapes selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.unaffiliatedColorBySubtype) charts.unaffiliatedColorBySubtype.destroy();
+        return;
+    }
+    
+    const filteredSubtypes = filteredIndices.map(item => item.key);
+    const filteredLabels = filteredIndices.map(item => item.label);
+    
+    // Get all unique colors across all filtered subtypes
     const allColors = new Set();
-    activeSubtypes.forEach(subtype => {
+    filteredSubtypes.forEach(subtype => {
         Object.keys(colorBySubtype[subtype]).forEach(color => allColors.add(color));
     });
     
@@ -2162,7 +2370,7 @@ function renderUnaffiliatedColorBySubtypeChart() {
         const bgColor = BEAD_COLORS[color] || '#999';
         return {
             label: color.charAt(0).toUpperCase() + color.slice(1),
-            data: activeSubtypes.map(subtype => colorBySubtype[subtype][color] || 0),
+            data: filteredSubtypes.map(subtype => colorBySubtype[subtype][color] || 0),
             backgroundColor: bgColor,
             borderColor: getBorderColor(bgColor),
             borderWidth: 1
@@ -2220,7 +2428,7 @@ function renderUnaffiliatedColorBySubtypeChart() {
     charts.unaffiliatedColorBySubtype = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: activeLabels,
+            labels: filteredLabels,
             datasets: datasets
         },
         options: mergeChartOptions(baseOptions),
@@ -2539,11 +2747,26 @@ function renderColorDistributionByParadeChart() {
         }))
         .sort((a, b) => b.total - a.total);
     
-    const paradeLabels = paradesSorted.map(p => p.parade);
+    // Initialize filters if not yet initialized
+    if (filters.colorDistributionByParade.size === 0) {
+        const allParades = paradesSorted.map(p => p.parade);
+        initializeParadeFilters('colorDistributionByParade', allParades);
+    }
+    
+    // Apply filters
+    const filteredParades = paradesSorted.filter(p => filters.colorDistributionByParade.has(p.parade));
+    
+    // If no parades selected, show empty chart
+    if (filteredParades.length === 0) {
+        if (charts.colorDistributionByParade) charts.colorDistributionByParade.destroy();
+        return;
+    }
+    
+    const paradeLabels = filteredParades.map(p => p.parade);
     
     // Get all unique colors across all parades
     const allColors = new Set();
-    paradesSorted.forEach(p => {
+    filteredParades.forEach(p => {
         Object.keys(p.colors).forEach(color => allColors.add(color));
     });
     
@@ -2552,7 +2775,7 @@ function renderColorDistributionByParadeChart() {
         const bgColor = BEAD_COLORS[color] || '#999';
         return {
             label: color.charAt(0).toUpperCase() + color.slice(1),
-            data: paradesSorted.map(p => p.colors[color] || 0),
+            data: filteredParades.map(p => p.colors[color] || 0),
             backgroundColor: bgColor,
             borderColor: getBorderColor(bgColor),
             borderWidth: 1

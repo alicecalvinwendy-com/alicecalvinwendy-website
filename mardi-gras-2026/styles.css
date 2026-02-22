@@ -333,7 +333,6 @@ section h3 {
     border-radius: var(--border-radius);
     padding: var(--spacing-lg);
     height: 450px;
-    max-height: 450px;
     display: flex;
     flex-direction: column;
     overflow: visible;
@@ -342,8 +341,12 @@ section h3 {
 /* Override height for containers with winners display */
 .chart-container:has(.winners-display) {
     height: auto;
-    max-height: none;
     min-height: 350px;
+}
+
+/* Override height for containers with filter panels - fixed height to prevent infinite growth */
+.chart-container:has(.filter-panel) {
+    height: 650px;
 }
 
 /* Override for donut chart to prevent overflow */
@@ -354,7 +357,7 @@ section h3 {
 
 .chart-container canvas {
     flex: 1;
-    max-height: 100%;
+    min-height: 0;
 }
 
 .chart-wide {
@@ -373,7 +376,11 @@ section h3 {
 .chart-full-width {
     grid-column: 1 / -1;
     height: 700px;
-    max-height: 700px;
+}
+
+/* Override height for full-width containers with filter panels - fixed height to prevent infinite growth */
+.chart-full-width:has(.filter-panel) {
+    height: 900px;
 }
 
 /* Tables */
@@ -716,6 +723,176 @@ footer {
 
 .mb-0 {
     margin-bottom: 0 !important;
+}
+
+/* Chart Filter Controls */
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.chart-header h3 {
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-toggle {
+    background: var(--purple-dark);
+    color: var(--white);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.filter-toggle:hover {
+    background: var(--purple-medium);
+    transform: translateY(-1px);
+}
+
+.filter-toggle:active {
+    transform: translateY(0);
+}
+
+.filter-arrow {
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.filter-toggle.active .filter-arrow {
+    transform: rotate(180deg);
+}
+
+.filter-panel {
+    display: none;
+    background: var(--purple-light);
+    border-radius: 8px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    border: 2px solid var(--purple-medium);
+}
+
+.filter-panel.open {
+    display: block;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.filter-actions button {
+    background: var(--white);
+    color: var(--purple-dark);
+    border: 1px solid var(--purple-medium);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.filter-actions button:hover {
+    background: var(--purple-medium);
+    color: var(--white);
+}
+
+.filter-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.5rem;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem;
+    background: var(--white);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-option:hover {
+    background: var(--gold-light);
+}
+
+.filter-option input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--purple-dark);
+}
+
+.filter-option label {
+    cursor: pointer;
+    user-select: none;
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+/* Ensure canvas maintains proper height in filtered containers */
+.chart-container:has(.filter-panel) canvas {
+    min-height: 400px;
+}
+
+.chart-full-width:has(.filter-panel) canvas {
+    min-height: 600px;
+}
+
+@media (max-width: 480px) {
+    .chart-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .chart-header h3 {
+        min-width: unset;
+    }
+    
+    .filter-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .filter-options {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Adjust container heights for mobile with filters - fixed heights */
+    .chart-container:has(.filter-panel) {
+        height: 700px;
+    }
+    
+    .chart-full-width:has(.filter-panel) {
+        height: 950px;
+    }
 }
 
 /* Animations */
