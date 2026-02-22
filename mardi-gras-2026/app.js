@@ -541,6 +541,12 @@ function initializeUI() {
     renderParadeGrid();
     renderStatistics();
     setupEventListeners();
+    
+    // Set special items description from data
+    const specialsDescEl = document.getElementById('specialsDescription');
+    if (specialsDescEl && mardiGrasData.throws.specials.description) {
+        specialsDescEl.textContent = mardiGrasData.throws.specials.description.text;
+    }
 }
 
 function renderParadeGrid() {
@@ -2363,10 +2369,14 @@ function renderSpecialsChart() {
     if (!ctx) return;
     
     const specialsData = mardiGrasData.throws.specials.items;
+    const paradeNames = mardiGrasData.throws.specials.description.parades;
     
     // Sort by count (largest to smallest)
     const sortedEntries = Object.entries(specialsData).sort((a, b) => b[1].count - a[1].count);
-    const labels = sortedEntries.map(([item]) => item);
+    const labels = sortedEntries.map(([paradeKey]) => {
+        // Get the parade's special item name from description.parades
+        return paradeNames[paradeKey] || paradeKey;
+    });
     const data = sortedEntries.map(([, value]) => value.count);
     
     // Calculate and set dynamic height
