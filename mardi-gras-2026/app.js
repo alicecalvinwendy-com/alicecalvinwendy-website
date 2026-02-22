@@ -15,6 +15,7 @@ let filters = {
     medallionVsRegularParade: new Set(),
     itemsByParade: new Set(),
     stuffedAnimalsByParade: new Set(),
+    ballsByParade: new Set(),
     unaffiliatedColorBySubtype: new Set()
 };
 
@@ -418,6 +419,8 @@ function selectAllParades(chartId) {
         renderItemsByParadeChart();
     } else if (chartId === 'stuffedAnimalsByParade') {
         renderStuffedAnimalsByParadeChart();
+    } else if (chartId === 'ballsByParade') {
+        renderBallsByParadeChart();
     }
 }
 
@@ -439,6 +442,8 @@ function deselectAllParades(chartId) {
         renderItemsByParadeChart();
     } else if (chartId === 'stuffedAnimalsByParade') {
         renderStuffedAnimalsByParadeChart();
+    } else if (chartId === 'ballsByParade') {
+        renderBallsByParadeChart();
     }
 }
 
@@ -593,6 +598,7 @@ function calculateStatistics() {
         totalDoubloons: 0,
         totalItems: 0,
         totalStuffedAnimals: 0,
+        totalBalls: 0,
         totalSpecials: 0
     };
 
@@ -662,6 +668,17 @@ function calculateStatistics() {
         });
     });
 
+    // Calculate balls
+    if (mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        Object.values(mardiGrasData.throws['Stuffed Animals']['Balls']).forEach(categoryData => {
+            parades.forEach(parade => {
+                if (categoryData[parade]) {
+                    stats.totalBalls += (categoryData[parade].lightUpCount || 0) + (categoryData[parade].regularCount || 0);
+                }
+            });
+        });
+    }
+
     // Calculate specials
     stats.totalSpecials = Object.values(mardiGrasData.throws.specials.items)
         .reduce((sum, item) => sum + (item.count || 0), 0);
@@ -677,10 +694,12 @@ function renderStatistics() {
     document.getElementById('totalDoubloons').textContent = stats.totalDoubloons.toLocaleString();
     document.getElementById('totalItems').textContent = stats.totalItems.toLocaleString();
     document.getElementById('totalStuffedAnimals').textContent = stats.totalStuffedAnimals.toLocaleString();
+    document.getElementById('totalBalls').textContent = stats.totalBalls.toLocaleString();
     document.getElementById('totalSpecials').textContent = stats.totalSpecials.toLocaleString();
     
     // Render winners
     renderWinners();
+    renderBallsWinners();
 }
 
 function renderWinners() {
@@ -745,6 +764,28 @@ function renderItemsWinners() {
     if (animalWinnerEl && winners.mostCommonAnimal.name) {
         animalWinnerEl.textContent = winners.mostCommonAnimal.name;
         animalDetailsEl.textContent = `${winners.mostCommonAnimal.count.toLocaleString()} caught`;
+    }
+}
+
+function renderBallsWinners() {
+    const winners = getBallsWinners();
+    
+    // Display most generous parade (balls)
+    const paradeWinnerEl = document.getElementById('paradeWinnerGenerousBalls');
+    const paradeDetailsEl = document.getElementById('paradeWinnerGenerousBallsDetails');
+    
+    if (paradeWinnerEl && winners.mostGenerousParade.name) {
+        paradeWinnerEl.textContent = winners.mostGenerousParade.name;
+        paradeDetailsEl.textContent = `${winners.mostGenerousParade.count.toLocaleString()} balls`;
+    }
+    
+    // Display most common ball type
+    const ballTypeWinnerEl = document.getElementById('ballTypeWinnerCommon');
+    const ballTypeDetailsEl = document.getElementById('ballTypeWinnerCommonDetails');
+    
+    if (ballTypeWinnerEl && winners.mostCommonType.type) {
+        ballTypeWinnerEl.textContent = winners.mostCommonType.type;
+        ballTypeDetailsEl.textContent = `${winners.mostCommonType.count.toLocaleString()} balls`;
     }
 }
 
@@ -1018,6 +1059,18 @@ function getItemsData() {
         });
     });
 
+    // Add balls as a single rolled-up category
+    data['balls'] = 0;
+    if (mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        Object.values(mardiGrasData.throws['Stuffed Animals']['Balls']).forEach(categoryData => {
+            parades.forEach(parade => {
+                if (categoryData[parade]) {
+                    data['balls'] += (categoryData[parade].lightUpCount || 0) + (categoryData[parade].regularCount || 0);
+                }
+            });
+        });
+    }
+
     return data;
 }
 
@@ -1059,6 +1112,70 @@ function getItemsWinners() {
     return {
         mostCommonItem: { name: mostCommonItem, count: maxItemCount },
         mostCommonAnimal: { name: mostCommonAnimal, count: maxAnimalCount }
+    };
+}
+
+function getBallsWinners() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
+    if (!mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        return {
+            mostGenerousParade: { name: '-', count: 0 },
+            mostCommonType: { type: '-', count: 0 }
+        };
+    }
+    
+    const ballCategories = mardiGrasData.throws['Stuffed Animals']['Balls'];
+    
+    // Find most generous parade (most balls given)
+    const paradeMap = new Map();
+    mardiGrasData.parades.forEach(parade => {
+        paradeMap.set(parade.keyName, parade.shortName);
+    });
+    
+    const paradeTotals = {};
+    parades.forEach(parade => {
+        let total = 0;
+        Object.values(ballCategories).forEach(categoryData => {
+            if (categoryData[parade]) {
+                total += (categoryData[parade].lightUpCount || 0) + (categoryData[parade].regularCount || 0);
+            }
+        });
+        paradeTotals[parade] = total;
+    });
+    
+    let maxParadeCount = 0;
+    let mostGenerousParade = '';
+    Object.entries(paradeTotals).forEach(([parade, count]) => {
+        if (count > maxParadeCount) {
+            maxParadeCount = count;
+            mostGenerousParade = parade;
+        }
+    });
+    
+    const paradeName = mostGenerousParade === 'unaffiliated' ? 'Unaffiliated' : (paradeMap.get(mostGenerousParade) || mostGenerousParade);
+    
+    // Find most common ball type
+    let maxTypeCount = 0;
+    let mostCommonType = '';
+    
+    Object.entries(ballCategories).forEach(([category, categoryData]) => {
+        let total = 0;
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                total += (categoryData[parade].lightUpCount || 0) + (categoryData[parade].regularCount || 0);
+            }
+        });
+        
+        if (total > maxTypeCount) {
+            maxTypeCount = total;
+            mostCommonType = category;
+        }
+    });
+    
+    return {
+        mostGenerousParade: { name: paradeName, count: maxParadeCount },
+        mostCommonType: { type: mostCommonType, count: maxTypeCount }
     };
 }
 
@@ -1134,6 +1251,78 @@ function getStuffedAnimalsByParadeData() {
     };
 }
 
+function getBallsByTypeData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
+    if (!mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        return { labels: [], datasets: [] };
+    }
+    
+    const ballCategories = mardiGrasData.throws['Stuffed Animals']['Balls'];
+    
+    // Calculate totals for each ball type
+    const categoryTotals = {};
+    Object.entries(ballCategories).forEach(([category, categoryData]) => {
+        let regularTotal = 0;
+        let lightUpTotal = 0;
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                regularTotal += categoryData[parade].regularCount || 0;
+                lightUpTotal += categoryData[parade].lightUpCount || 0;
+            }
+        });
+        categoryTotals[category] = { regular: regularTotal, lightUp: lightUpTotal, total: regularTotal + lightUpTotal };
+    });
+    
+    // Sort by total count (largest to smallest)
+    const sortedEntries = Object.entries(categoryTotals).sort((a, b) => b[1].total - a[1].total);
+    const labels = sortedEntries.map(([category]) => category);
+    const regularData = sortedEntries.map(([, data]) => data.regular);
+    const lightUpData = sortedEntries.map(([, data]) => data.lightUp);
+    
+    return {
+        labels: labels,
+        datasets: [
+            { label: 'Regular', data: regularData },
+            { label: 'Light-up', data: lightUpData }
+        ]
+    };
+}
+
+function getBallsByParadeData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    if (!mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        return { labels: paradeLabels, datasets: [], categories: [] };
+    }
+    
+    // Get all ball categories
+    const categories = Object.keys(mardiGrasData.throws['Stuffed Animals']['Balls']);
+    
+    // Build dataset for each category
+    const datasets = categories.map(category => {
+        const data = parades.map(parade => {
+            const ballData = mardiGrasData.throws['Stuffed Animals']['Balls'][category][parade];
+            return (ballData?.lightUpCount || 0) + (ballData?.regularCount || 0);
+        });
+        return {
+            label: category,
+            data: data
+        };
+    });
+    
+    return {
+        labels: paradeLabels,
+        datasets: datasets,
+        categories: categories
+    };
+}
+
 function getDoubloonsData() {
     const data = {};
     
@@ -1186,6 +1375,13 @@ function getParadeComparisonData() {
         Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
             totalItems += categoryData[paradeKey]?.count || 0;
         });
+        
+        // Add balls
+        if (mardiGrasData.throws['Stuffed Animals']['Balls']) {
+            Object.values(mardiGrasData.throws['Stuffed Animals']['Balls']).forEach(categoryData => {
+                totalItems += (categoryData[paradeKey]?.lightUpCount || 0) + (categoryData[paradeKey]?.regularCount || 0);
+            });
+        }
         
         itemsData[paradeShortName] = totalItems;
 
@@ -1426,6 +1622,8 @@ function renderAllVisualizations() {
     renderStuffedAnimalsChart();
     renderItemsByParadeChart();
     renderStuffedAnimalsByParadeChart();
+    renderBallsByTypeChart();
+    renderBallsByParadeChart();
     renderSpecialsChart();
     
     // Tables
@@ -2009,6 +2207,117 @@ function renderStuffedAnimalsChart() {
     });
 }
 
+function renderBallsByTypeChart() {
+    const ctx = document.getElementById('ballsByTypeChart');
+    if (!ctx) return;
+    
+    const ballsData = getBallsByTypeData();
+    const { labels, datasets } = ballsData;
+    
+    if (labels.length === 0) return;
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+
+    if (charts.ballsByType) charts.ballsByType.destroy();
+    
+    // Colors for Regular and Light-up
+    const regularColor = CHART_COLORS.purple;
+    const lightUpColor = CHART_COLORS.gold;
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                display: function(context) {
+                    // Show total on the rightmost segment (light-up)
+                    return context.datasetIndex === 1;
+                },
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: function(value, context) {
+                    // Calculate and display total
+                    const datasetIndex = context.dataIndex;
+                    const regularValue = context.chart.data.datasets[0].data[datasetIndex];
+                    const lightUpValue = context.chart.data.datasets[1].data[datasetIndex];
+                    return regularValue + lightUpValue;
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 5,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.ballsByType = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Regular',
+                    data: datasets[0].data,
+                    backgroundColor: regularColor,
+                    borderColor: regularColor,
+                    borderWidth: 1
+                },
+                {
+                    label: 'Light-up',
+                    data: datasets[1].data,
+                    backgroundColor: lightUpColor,
+                    borderColor: lightUpColor,
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
 function renderAllItemsChart() {
     const ctx = document.getElementById('allItemsChart');
     if (!ctx) return;
@@ -2354,6 +2663,140 @@ function renderStuffedAnimalsByParadeChart() {
     };
     
     charts.stuffedAnimalsByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: coloredDatasets
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderBallsByParadeChart() {
+    const ctx = document.getElementById('ballsByParadeChart');
+    if (!ctx) return;
+    
+    const ballsByParadeData = getBallsByParadeData();
+    const { labels, datasets, categories } = ballsByParadeData;
+    
+    if (categories.length === 0) return;
+    
+    // Calculate total balls for each parade and sort (largest to smallest)
+    const paradeWithTotals = labels.map((label, index) => {
+        const total = datasets.reduce((sum, dataset) => sum + dataset.data[index], 0);
+        return { label, index, total };
+    });
+    
+    paradeWithTotals.sort((a, b) => b.total - a.total);
+    
+    const sortedLabels = paradeWithTotals.map(item => item.label);
+    const sortedIndices = paradeWithTotals.map(item => item.index);
+    
+    // Reorder datasets according to sorted parade order
+    const sortedDatasets = datasets.map(dataset => ({
+        ...dataset,
+        data: sortedIndices.map(idx => dataset.data[idx])
+    }));
+    
+    // Initialize filters if not yet initialized
+    if (filters.ballsByParade.size === 0) {
+        initializeParadeFilters('ballsByParade', sortedLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.ballsByParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.ballsByParade) charts.ballsByParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredDatasets = sortedDatasets.map(dataset => ({
+        ...dataset,
+        data: filteredIndices.map(item => dataset.data[item.index])
+    }));
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    // Generate distinct colors for each category
+    const categoryColors = generateDistinctColors(categories.length);
+    
+    // Map colors to datasets
+    const coloredDatasets = filteredDatasets.map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: categoryColors[index],
+        borderColor: categoryColors[index],
+        borderWidth: 1
+    }));
+    
+    if (charts.ballsByParade) charts.ballsByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                display: false // Don't show individual values on stacked segments
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.x;
+                        return value > 0 ? `${label}: ${value}` : '';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Ball Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 5,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.ballsByParade = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: filteredLabels,

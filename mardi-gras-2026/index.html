@@ -65,6 +65,11 @@
                     <div class="stat-label">Stuffed Animals</div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon">⚽</div>
+                    <div class="stat-value" id="totalBalls">0</div>
+                    <div class="stat-label">Balls</div>
+                </div>
+                <div class="stat-card">
                     <div class="stat-icon">⭐</div>
                     <div class="stat-value" id="totalSpecials">0</div>
                     <div class="stat-label">Special Items</div>
@@ -287,6 +292,18 @@
                             <div class="winner-value" id="winnerStuffedAnimal">-</div>
                             <div class="winner-subtext" id="winnerStuffedAnimalDetails">-</div>
                         </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">⚽</div>
+                            <div class="winner-label">Most Generous (Balls)</div>
+                            <div class="winner-value" id="paradeWinnerGenerousBalls">-</div>
+                            <div class="winner-subtext" id="paradeWinnerGenerousBallsDetails">-</div>
+                        </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">🎾</div>
+                            <div class="winner-label">Most Common Ball Type</div>
+                            <div class="winner-value" id="ballTypeWinnerCommon">-</div>
+                            <div class="winner-subtext" id="ballTypeWinnerCommonDetails">-</div>
+                        </div>
                     </div>
                 </div>
                 <div class="chart-container chart-full-width">
@@ -330,6 +347,27 @@
                         <div class="filter-options" id="stuffedAnimalsByParadeFilterOptions"></div>
                     </div>
                     <canvas id="stuffedAnimalsByParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Balls by Type</h3>
+                    <canvas id="ballsByTypeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Balls by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('ballsByParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="ballsByParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('ballsByParade')">Select All</button>
+                            <button onclick="deselectAllParades('ballsByParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="ballsByParadeFilterOptions"></div>
+                    </div>
+                    <canvas id="ballsByParadeChart"></canvas>
                 </div>
             </div>
         </section>
