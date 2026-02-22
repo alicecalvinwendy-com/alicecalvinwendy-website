@@ -1246,6 +1246,7 @@ function renderAllVisualizations() {
     // Other sections
     renderItemsChart();
     renderItemsWinners();
+    renderAllItemsChart();
     renderStuffedAnimalsChart();
     renderItemsByParadeChart();
     renderSpecialsChart();
@@ -1280,8 +1281,11 @@ function updateBeadCharts() {
 
 function renderBeadCountChart(beadData) {
     const ctx = document.getElementById('beadCountChart');
-    const labels = Object.keys(beadData);
-    const data = labels.map(color => beadData[color].count);
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].count - a[1].count);
+    const labels = sortedEntries.map(([color]) => color);
+    const data = sortedEntries.map(([, value]) => value.count);
     const colors = labels.map(color => BEAD_COLORS[color] || '#999');
 
     if (charts.beadCount) charts.beadCount.destroy();
@@ -1350,8 +1354,11 @@ function renderBeadCountChart(beadData) {
 
 function renderBeadWeightChart(beadData) {
     const ctx = document.getElementById('beadWeightChart');
-    const labels = Object.keys(beadData);
-    const dataInGrams = labels.map(color => beadData[color].weight);
+    
+    // Sort by weight (largest to smallest)
+    const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].weight - a[1].weight);
+    const labels = sortedEntries.map(([color]) => color);
+    const dataInGrams = sortedEntries.map(([, value]) => value.weight);
     
     // Convert data based on weight unit
     const data = weightUnit === 'pounds' 
@@ -1436,8 +1443,11 @@ function renderBeadWeightChart(beadData) {
 
 function renderBeadPercentageChart(beadData) {
     const ctx = document.getElementById('beadPercentageChart');
-    const labels = Object.keys(beadData);
-    const counts = labels.map(color => beadData[color].count);
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].count - a[1].count);
+    const labels = sortedEntries.map(([color]) => color);
+    const counts = sortedEntries.map(([, value]) => value.count);
     const total = counts.reduce((sum, val) => sum + val, 0);
     const percentages = counts.map(count => ((count / total) * 100).toFixed(1));
     const colors = labels.map(color => BEAD_COLORS[color] || '#999');
@@ -1633,8 +1643,11 @@ function renderBeadTypesByParadeChart() {
 function renderItemsChart() {
     const ctx = document.getElementById('itemsChart');
     const itemsData = getItemsData();
-    const labels = Object.keys(itemsData);
-    const data = Object.values(itemsData);
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(itemsData).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(([item]) => item);
+    const data = sortedEntries.map(([, count]) => count);
     const total = data.reduce((sum, val) => sum + val, 0);
     
     // Generate evenly-spaced distinct colors for all items
@@ -1708,8 +1721,11 @@ function renderItemsChart() {
 function renderStuffedAnimalsChart() {
     const ctx = document.getElementById('stuffedAnimalsChart');
     const typeData = mardiGrasData.throws.stuffedAnimals.type;
-    const labels = Object.keys(typeData);
-    const data = labels.map(type => typeData[type].count);
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(typeData).sort((a, b) => b[1].count - a[1].count);
+    const labels = sortedEntries.map(([type]) => type);
+    const data = sortedEntries.map(([, value]) => value.count);
     const colors = generateColorPattern(labels.length);
 
     if (charts.stuffedAnimals) charts.stuffedAnimals.destroy();
@@ -1774,6 +1790,106 @@ function renderStuffedAnimalsChart() {
     });
 }
 
+function renderAllItemsChart() {
+    const ctx = document.getElementById('allItemsChart');
+    if (!ctx) return;
+    
+    const itemsData = getItemsData();
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(itemsData).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(([item]) => item);
+    const data = sortedEntries.map(([, count]) => count);
+    
+    // Calculate dynamic height based on number of items
+    // Each bar needs ~25px for tight spacing
+    const minHeightPerBar = 25;
+    const baseHeight = 150; // For padding, title, axis labels, etc.
+    const calculatedHeight = Math.max(400, (labels.length * minHeightPerBar) + baseHeight);
+    
+    // Set the container height dynamically
+    const container = ctx.parentElement;
+    if (container) {
+        container.style.height = `${calculatedHeight}px`;
+    }
+    
+    // Generate distinct colors for all items
+    const colors = generateDistinctColors(labels.length);
+
+    if (charts.allItems) charts.allItems.destroy();
+    
+    const labelFontSize = isMobileView() ? 11 : 12;
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: labelFontSize
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            y: {
+                ticks: {
+                    padding: 5,
+                    font: {
+                        size: labelFontSize
+                    }
+                }
+            }
+        },
+        datasets: {
+            bar: {
+                barPercentage: 0.95, // Increase to reduce gap between bars
+                categoryPercentage: 0.95 // Increase to reduce gap between bars
+            }
+        }
+    };
+    
+    charts.allItems = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                label: 'Count',
+                data: data,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2,
+                barThickness: labelFontSize // Match bar width to label font size
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
 function renderItemsByParadeChart() {
     const ctx = document.getElementById('itemsByParadeChart');
     if (!ctx) return;
@@ -1781,13 +1897,30 @@ function renderItemsByParadeChart() {
     const itemsByParadeData = getItemsByParadeData();
     const { labels, datasets, itemTypes } = itemsByParadeData;
     
+    // Calculate total items for each parade and sort (largest to smallest)
+    const paradeWithTotals = labels.map((label, index) => {
+        const total = datasets.reduce((sum, dataset) => sum + dataset.data[index], 0);
+        return { label, index, total };
+    });
+    
+    paradeWithTotals.sort((a, b) => b.total - a.total);
+    
+    const sortedLabels = paradeWithTotals.map(item => item.label);
+    const sortedIndices = paradeWithTotals.map(item => item.index);
+    
+    // Reorder datasets according to sorted parade order
+    const sortedDatasets = datasets.map(dataset => ({
+        ...dataset,
+        data: sortedIndices.map(idx => dataset.data[idx])
+    }));
+    
     // Initialize filters if not yet initialized
     if (filters.itemsByParade.size === 0) {
-        initializeParadeFilters('itemsByParade', labels);
+        initializeParadeFilters('itemsByParade', sortedLabels);
     }
     
     // Apply filters
-    const filteredIndices = labels
+    const filteredIndices = sortedLabels
         .map((label, index) => ({ label, index }))
         .filter(item => filters.itemsByParade.has(item.label));
     
@@ -1798,7 +1931,7 @@ function renderItemsByParadeChart() {
     }
     
     const filteredLabels = filteredIndices.map(item => item.label);
-    const filteredDatasets = datasets.map(dataset => ({
+    const filteredDatasets = sortedDatasets.map(dataset => ({
         ...dataset,
         data: filteredIndices.map(item => dataset.data[item.index])
     }));
@@ -1883,8 +2016,11 @@ function renderItemsByParadeChart() {
 function renderSpecialsChart() {
     const ctx = document.getElementById('specialsChart');
     const specialsData = mardiGrasData.throws.specials.items;
-    const labels = Object.keys(specialsData);
-    const data = labels.map(item => specialsData[item].count);
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(specialsData).sort((a, b) => b[1].count - a[1].count);
+    const labels = sortedEntries.map(([item]) => item);
+    const data = sortedEntries.map(([, value]) => value.count);
     
     // Generate color pattern
     const colors = labels.map((_, index) => {
@@ -1958,8 +2094,11 @@ function renderSpecialsChart() {
 function renderDoubloonsChart() {
     const ctx = document.getElementById('doubloonsChart');
     const doubloonsData = getDoubloonsData();
-    const labels = Object.keys(doubloonsData);
-    const data = Object.values(doubloonsData);
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(doubloonsData).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(([label]) => label);
+    const data = sortedEntries.map(([, count]) => count);
     const isHorizontal = true; // Always horizontal since we show all parades
     const colors = generateColorPattern(labels.length);
 
@@ -2042,9 +2181,15 @@ function renderMedallionVsRegularByColorChart() {
     if (!ctx) return; // Chart element doesn't exist yet
     
     const beadData = getBeadData();
-    const labels = Object.keys(beadData).filter(color => beadData[color].count > 0);
-    const medallionCounts = labels.map(color => beadData[color].medallion.count);
-    const regularCounts = labels.map(color => beadData[color].regular.count);
+    
+    // Sort by total count (medallion + regular, largest to smallest)
+    const sortedEntries = Object.entries(beadData)
+        .filter(([color, data]) => data.count > 0)
+        .sort((a, b) => b[1].count - a[1].count);
+    
+    const labels = sortedEntries.map(([color]) => color);
+    const medallionCounts = sortedEntries.map(([, data]) => data.medallion.count);
+    const regularCounts = sortedEntries.map(([, data]) => data.regular.count);
     const colors = labels.map(color => BEAD_COLORS[color] || '#999');
     
     if (charts.medallionVsRegularColor) charts.medallionVsRegularColor.destroy();
@@ -2141,13 +2286,26 @@ function renderMedallionVsRegularByParadeChart() {
     
     const { paradeLabels, medallionData, regularData } = getBeadDataByType();
     
+    // Sort by total count (medallion + regular, largest to smallest)
+    const combined = paradeLabels.map((label, index) => ({
+        label,
+        medallion: medallionData[index],
+        regular: regularData[index],
+        total: medallionData[index] + regularData[index]
+    }));
+    
+    const sorted = combined.sort((a, b) => b.total - a.total);
+    const sortedLabels = sorted.map(item => item.label);
+    const sortedMedallionData = sorted.map(item => item.medallion);
+    const sortedRegularData = sorted.map(item => item.regular);
+    
     // Initialize filters if not yet initialized
     if (filters.medallionVsRegularParade.size === 0) {
-        initializeParadeFilters('medallionVsRegularParade', paradeLabels);
+        initializeParadeFilters('medallionVsRegularParade', sortedLabels);
     }
     
     // Apply filters
-    const filteredIndices = paradeLabels
+    const filteredIndices = sortedLabels
         .map((label, index) => ({ label, index }))
         .filter(item => filters.medallionVsRegularParade.has(item.label));
     
@@ -2158,8 +2316,8 @@ function renderMedallionVsRegularByParadeChart() {
     }
     
     const filteredLabels = filteredIndices.map(item => item.label);
-    const filteredMedallionData = filteredIndices.map(item => medallionData[item.index]);
-    const filteredRegularData = filteredIndices.map(item => regularData[item.index]);
+    const filteredMedallionData = filteredIndices.map(item => sortedMedallionData[item.index]);
+    const filteredRegularData = filteredIndices.map(item => sortedRegularData[item.index]);
     
     if (charts.medallionVsRegularParade) charts.medallionVsRegularParade.destroy();
     
@@ -2256,25 +2414,24 @@ function renderUnaffiliatedSizeChart() {
     if (!ctx) return; // Chart element doesn't exist yet
     
     const sizeData = getUnaffiliatedSizeData();
-    const labels = ['Small', 'Medium', 'Large', 'Non-Sphere', 'Medallion', 'Special'];
-    const data = [
-        sizeData.small,
-        sizeData.medium,
-        sizeData.large,
-        sizeData.nonSphere,
-        sizeData.medallion,
-        sizeData.special
+    
+    // Create array of [label, count] pairs and sort by count (largest to smallest)
+    const dataEntries = [
+        ['Small', sizeData.small],
+        ['Medium', sizeData.medium],
+        ['Large', sizeData.large],
+        ['Non-Sphere', sizeData.nonSphere],
+        ['Medallion', sizeData.medallion],
+        ['Special', sizeData.special]
     ];
     
-    // Filter out zero values
-    const filteredData = [];
-    const filteredLabels = [];
-    labels.forEach((label, index) => {
-        if (data[index] > 0) {
-            filteredLabels.push(label);
-            filteredData.push(data[index]);
-        }
-    });
+    // Filter out zero values and sort
+    const filteredAndSorted = dataEntries
+        .filter(([label, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1]);
+    
+    const filteredLabels = filteredAndSorted.map(([label]) => label);
+    const filteredData = filteredAndSorted.map(([, count]) => count);
     
     if (filteredData.length === 0) {
         // No unaffiliated beads, hide the chart
@@ -2349,15 +2506,25 @@ function renderUnaffiliatedColorBySubtypeChart() {
     const subtypeLabels = ['Small', 'Medium', 'Large', 'Non-Sphere', 'Medallion', 'Special'];
     const subtypeKeys = ['small', 'medium', 'large', 'nonSphere', 'medallion', 'special'];
     
-    // Filter out subtypes with no data
+    // Filter out subtypes with no data and calculate totals for sorting
     const activeSubtypes = [];
-    const activeLabels = [];
     subtypeKeys.forEach((key, index) => {
-        if (Object.keys(colorBySubtype[key]).length > 0) {
-            activeSubtypes.push(key);
-            activeLabels.push(subtypeLabels[index]);
+        const colors = colorBySubtype[key];
+        const total = Object.values(colors).reduce((sum, count) => sum + count, 0);
+        if (total > 0) {
+            activeSubtypes.push({
+                key,
+                label: subtypeLabels[index],
+                total
+            });
         }
     });
+    
+    // Sort by total count (largest to smallest)
+    activeSubtypes.sort((a, b) => b.total - a.total);
+    
+    const sortedKeys = activeSubtypes.map(item => item.key);
+    const sortedLabels = activeSubtypes.map(item => item.label);
     
     if (activeSubtypes.length === 0) {
         // No unaffiliated beads, hide the chart
@@ -2367,13 +2534,13 @@ function renderUnaffiliatedColorBySubtypeChart() {
     
     // Initialize filters if not yet initialized
     if (filters.unaffiliatedColorBySubtype.size === 0) {
-        const shapes = activeSubtypes.map((key, index) => ({ key, label: activeLabels[index] }));
+        const shapes = activeSubtypes.map(item => ({ key: item.key, label: item.label }));
         initializeShapeFilters(shapes);
     }
     
     // Apply filters
-    const filteredIndices = activeSubtypes
-        .map((key, index) => ({ key, label: activeLabels[index], index }))
+    const filteredIndices = sortedKeys
+        .map((key, index) => ({ key, label: sortedLabels[index], index }))
         .filter(item => filters.unaffiliatedColorBySubtype.has(item.key));
     
     // If no shapes selected, show empty chart
