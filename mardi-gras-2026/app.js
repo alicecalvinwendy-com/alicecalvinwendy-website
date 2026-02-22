@@ -6,10 +6,6 @@
 
 // Global state
 let charts = {};
-let currentFilters = {
-    parade: 'all',
-    beadColor: 'all'
-};
 
 // Bead color mapping for visualization
 const BEAD_COLORS = {
@@ -44,6 +40,17 @@ function generateColorPattern(count) {
         colors.push(pattern[i % 3]);
     }
     return colors;
+}
+
+// Helper function to get border color for bars (darker for light colors)
+function getBorderColor(backgroundColor) {
+    // For white, silver, and other light colors, use dark gray border
+    const lightColors = ['#F5F5F5', '#C0C0C0', '#E0F7FA', '#FFD700', '#FDB927'];
+    if (lightColors.includes(backgroundColor)) {
+        return '#333333';
+    }
+    // For all other colors, use the same color but darker
+    return backgroundColor;
 }
 
 // Helper function to detect mobile screens
@@ -143,11 +150,16 @@ function mergeChartOptions(baseOptions) {
 
 document.addEventListener('DOMContentLoaded', () => {
     try {
+        console.log('Starting initialization...');
         initializeUI();
+        console.log('UI initialized');
         renderAllVisualizations();
+        console.log('Visualizations rendered');
         hideLoading();
+        console.log('Initialization complete');
     } catch (error) {
         console.error('Error initializing app:', error);
+        console.error('Error stack:', error.stack);
         showError('Failed to initialize. Please refresh the page.');
     }
 });
@@ -180,7 +192,6 @@ function showError(message) {
 function initializeUI() {
     renderParadeGrid();
     renderStatistics();
-    setupFilters();
     setupEventListeners();
 }
 
@@ -197,67 +208,11 @@ function renderParadeGrid() {
     `).join('');
 }
 
-function setupFilters() {
-    // Populate parade filter
-    const paradeFilter = document.getElementById('paradeFilter');
-    mardiGrasData.parades.forEach(parade => {
-        const option = document.createElement('option');
-        option.value = parade.keyName;
-        option.textContent = parade.name;
-        paradeFilter.appendChild(option);
-    });
-
-    // Populate bead color filter
-    const colorFilter = document.getElementById('beadColorFilter');
-    Object.keys(mardiGrasData.beads).forEach(color => {
-        const option = document.createElement('option');
-        option.value = color;
-        option.textContent = color.charAt(0).toUpperCase() + color.slice(1);
-        colorFilter.appendChild(option);
-    });
-}
-
 function setupEventListeners() {
-    // Parade filter
-    document.getElementById('paradeFilter').addEventListener('change', (e) => {
-        currentFilters.parade = e.target.value;
-        handleFilterChange();
-    });
-
-    // Bead color filter
-    document.getElementById('beadColorFilter').addEventListener('change', (e) => {
-        currentFilters.beadColor = e.target.value;
-        updateBeadCharts();
-    });
-
-    // Parade card click
-    document.getElementById('paradeGrid').addEventListener('click', (e) => {
-        const card = e.target.closest('.parade-card');
-        if (card) {
-            const parade = card.dataset.parade;
-            document.getElementById('paradeFilter').value = parade;
-            currentFilters.parade = parade;
-            handleFilterChange();
-        }
-    });
-
     // Table sorting
     document.querySelectorAll('.sortable').forEach(header => {
         header.addEventListener('click', () => sortTable(header));
     });
-}
-
-function handleFilterChange() {
-    renderStatistics();
-    renderAllVisualizations();
-    
-    // Show/hide comparison section
-    const comparisonSection = document.getElementById('comparisonSection');
-    if (currentFilters.parade === 'all') {
-        comparisonSection.style.display = 'block';
-    } else {
-        comparisonSection.style.display = 'none';
-    }
 }
 
 // ========================================
@@ -274,21 +229,42 @@ function calculateStatistics() {
         totalSpecials: 0
     };
 
-    const parades = currentFilters.parade === 'all' 
-        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
-        : [currentFilters.parade];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
 
-    // Calculate beads (medallion + regular)
+    // Calculate beads
     Object.values(mardiGrasData.beads).forEach(colorData => {
         parades.forEach(parade => {
             if (colorData[parade]) {
-                if (colorData[parade].medallion) {
-                    stats.totalBeadsCount += colorData[parade].medallion.count || 0;
-                    stats.totalBeadsWeight += colorData[parade].medallion.weight || 0;
-                }
-                if (colorData[parade].regular) {
-                    stats.totalBeadsCount += colorData[parade].regular.count || 0;
-                    stats.totalBeadsWeight += colorData[parade].regular.weight || 0;
+                const paradeData = colorData[parade];
+                
+                if (parade === 'unaffiliated') {
+                    // Handle unaffiliated size-based structure
+                    ['small', 'medium', 'large', 'nonSphere'].forEach(size => {
+                        if (paradeData[size]) {
+                            stats.totalBeadsCount += paradeData[size].count || 0;
+                            stats.totalBeadsWeight += paradeData[size].weight || 0;
+                        }
+                    });
+                    if (paradeData.other) {
+                        if (paradeData.other.medallion) {
+                            stats.totalBeadsCount += paradeData.other.medallion.count || 0;
+                            stats.totalBeadsWeight += paradeData.other.medallion.weight || 0;
+                        }
+                        if (paradeData.other.special) {
+                            stats.totalBeadsCount += paradeData.other.special.count || 0;
+                            stats.totalBeadsWeight += paradeData.other.special.weight || 0;
+                        }
+                    }
+                } else {
+                    // Handle parade beads (medallion/regular structure)
+                    if (paradeData.medallion) {
+                        stats.totalBeadsCount += paradeData.medallion.count || 0;
+                        stats.totalBeadsWeight += paradeData.medallion.weight || 0;
+                    }
+                    if (paradeData.regular) {
+                        stats.totalBeadsCount += paradeData.regular.count || 0;
+                        stats.totalBeadsWeight += paradeData.regular.weight || 0;
+                    }
                 }
             }
         });
@@ -318,21 +294,8 @@ function calculateStatistics() {
     });
 
     // Calculate specials
-    if (currentFilters.parade === 'all') {
-        stats.totalSpecials = Object.values(mardiGrasData.throws.specials.items)
-            .reduce((sum, item) => sum + (item.count || 0), 0);
-    } else {
-        // Only count specials for relevant parades
-        const specialParades = mardiGrasData.throws.specials.description.parades;
-        if (specialParades[currentFilters.parade]) {
-            const specialType = specialParades[currentFilters.parade].toLowerCase();
-            Object.entries(mardiGrasData.throws.specials.items).forEach(([key, value]) => {
-                if (key.includes(specialType.split('/')[0])) {
-                    stats.totalSpecials += value.count || 0;
-                }
-            });
-        }
-    }
+    stats.totalSpecials = Object.values(mardiGrasData.throws.specials.items)
+        .reduce((sum, item) => sum + (item.count || 0), 0);
 
     return stats;
 }
@@ -346,6 +309,51 @@ function renderStatistics() {
     document.getElementById('totalItems').textContent = stats.totalItems.toLocaleString();
     document.getElementById('totalStuffedAnimals').textContent = stats.totalStuffedAnimals.toLocaleString();
     document.getElementById('totalSpecials').textContent = stats.totalSpecials.toLocaleString();
+    
+    // Render winners
+    renderWinners();
+}
+
+function renderWinners() {
+    const beadData = getBeadData();
+    
+    // Find winner by count
+    let maxCount = 0;
+    let countWinner = '';
+    
+    Object.entries(beadData).forEach(([color, data]) => {
+        if (data.count > maxCount) {
+            maxCount = data.count;
+            countWinner = color;
+        }
+    });
+    
+    // Find winner by weight
+    let maxWeight = 0;
+    let weightWinner = '';
+    
+    Object.entries(beadData).forEach(([color, data]) => {
+        if (data.weight > maxWeight) {
+            maxWeight = data.weight;
+            weightWinner = color;
+        }
+    });
+    
+    // Display winners
+    const countWinnerEl = document.getElementById('winnerCount');
+    const countDetailsEl = document.getElementById('winnerCountDetails');
+    const weightWinnerEl = document.getElementById('winnerWeight');
+    const weightDetailsEl = document.getElementById('winnerWeightDetails');
+    
+    if (countWinnerEl && countWinner) {
+        countWinnerEl.textContent = countWinner.charAt(0).toUpperCase() + countWinner.slice(1);
+        countDetailsEl.textContent = `${maxCount.toLocaleString()} beads`;
+    }
+    
+    if (weightWinnerEl && weightWinner) {
+        weightWinnerEl.textContent = weightWinner.charAt(0).toUpperCase() + weightWinner.slice(1);
+        weightDetailsEl.textContent = `${maxWeight.toLocaleString()}g`;
+    }
 }
 
 // ========================================
@@ -353,35 +361,74 @@ function renderStatistics() {
 // ========================================
 
 function getBeadData() {
-    const parades = currentFilters.parade === 'all'
-        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
-        : [currentFilters.parade];
-
-    const colors = currentFilters.beadColor === 'all'
-        ? Object.keys(mardiGrasData.beads)
-        : [currentFilters.beadColor];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    const colors = Object.keys(mardiGrasData.beads);
 
     const data = {};
     
     colors.forEach(color => {
-        data[color] = { count: 0, weight: 0, medallion: { count: 0, weight: 0 }, regular: { count: 0, weight: 0 } };
+        data[color] = { 
+            count: 0, 
+            weight: 0, 
+            medallion: { count: 0, weight: 0 }, 
+            regular: { count: 0, weight: 0 },
+            unaffiliatedSizes: { small: 0, medium: 0, large: 0, nonSphere: 0, other: 0 }
+        };
+        
         parades.forEach(parade => {
             if (mardiGrasData.beads[color] && mardiGrasData.beads[color][parade]) {
-                // Aggregate medallion counts
-                if (mardiGrasData.beads[color][parade].medallion) {
-                    data[color].medallion.count += mardiGrasData.beads[color][parade].medallion.count || 0;
-                    data[color].medallion.weight += mardiGrasData.beads[color][parade].medallion.weight || 0;
+                const paradeData = mardiGrasData.beads[color][parade];
+                
+                if (parade === 'unaffiliated') {
+                    // Handle unaffiliated's size-based structure
+                    if (paradeData.small) {
+                        data[color].regular.count += paradeData.small.count || 0;
+                        data[color].regular.weight += paradeData.small.weight || 0;
+                        data[color].unaffiliatedSizes.small += paradeData.small.count || 0;
+                    }
+                    if (paradeData.medium) {
+                        data[color].regular.count += paradeData.medium.count || 0;
+                        data[color].regular.weight += paradeData.medium.weight || 0;
+                        data[color].unaffiliatedSizes.medium += paradeData.medium.count || 0;
+                    }
+                    if (paradeData.large) {
+                        data[color].regular.count += paradeData.large.count || 0;
+                        data[color].regular.weight += paradeData.large.weight || 0;
+                        data[color].unaffiliatedSizes.large += paradeData.large.count || 0;
+                    }
+                    if (paradeData.nonSphere) {
+                        data[color].regular.count += paradeData.nonSphere.count || 0;
+                        data[color].regular.weight += paradeData.nonSphere.weight || 0;
+                        data[color].unaffiliatedSizes.nonSphere += paradeData.nonSphere.count || 0;
+                    }
+                    if (paradeData.other) {
+                        if (paradeData.other.medallion) {
+                            data[color].medallion.count += paradeData.other.medallion.count || 0;
+                            data[color].medallion.weight += paradeData.other.medallion.weight || 0;
+                        }
+                        if (paradeData.other.special) {
+                            data[color].regular.count += paradeData.other.special.count || 0;
+                            data[color].regular.weight += paradeData.other.special.weight || 0;
+                            data[color].unaffiliatedSizes.other += paradeData.other.special.count || 0;
+                        }
+                    }
+                } else {
+                    // Handle parade beads (medallion/regular structure)
+                    if (paradeData.medallion) {
+                        data[color].medallion.count += paradeData.medallion.count || 0;
+                        data[color].medallion.weight += paradeData.medallion.weight || 0;
+                    }
+                    if (paradeData.regular) {
+                        data[color].regular.count += paradeData.regular.count || 0;
+                        data[color].regular.weight += paradeData.regular.weight || 0;
+                    }
                 }
-                // Aggregate regular counts
-                if (mardiGrasData.beads[color][parade].regular) {
-                    data[color].regular.count += mardiGrasData.beads[color][parade].regular.count || 0;
-                    data[color].regular.weight += mardiGrasData.beads[color][parade].regular.weight || 0;
-                }
-                // Total counts (medallion + regular)
-                data[color].count = data[color].medallion.count + data[color].regular.count;
-                data[color].weight = data[color].medallion.weight + data[color].regular.weight;
             }
         });
+        
+        // Calculate totals (medallion + regular)
+        data[color].count = data[color].medallion.count + data[color].regular.count;
+        data[color].weight = data[color].medallion.weight + data[color].regular.weight;
     });
 
     return data;
@@ -389,9 +436,7 @@ function getBeadData() {
 
 // New function to get bead data with type breakdown by parade
 function getBeadDataByType() {
-    const parades = currentFilters.parade === 'all'
-        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
-        : [currentFilters.parade];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
 
     const paradeLabels = parades.map(p => {
         if (p === 'unaffiliated') return 'Unaffiliated';
@@ -402,8 +447,18 @@ function getBeadDataByType() {
     const medallionData = parades.map(parade => {
         let total = 0;
         Object.values(mardiGrasData.beads).forEach(colorData => {
-            if (colorData[parade] && colorData[parade].medallion) {
-                total += colorData[parade].medallion.count || 0;
+            if (colorData[parade]) {
+                if (parade === 'unaffiliated') {
+                    // For unaffiliated, only count other.medallion as medallion
+                    if (colorData[parade].other && colorData[parade].other.medallion) {
+                        total += colorData[parade].other.medallion.count || 0;
+                    }
+                } else {
+                    // For parades, count medallion beads
+                    if (colorData[parade].medallion) {
+                        total += colorData[parade].medallion.count || 0;
+                    }
+                }
             }
         });
         return total;
@@ -412,8 +467,23 @@ function getBeadDataByType() {
     const regularData = parades.map(parade => {
         let total = 0;
         Object.values(mardiGrasData.beads).forEach(colorData => {
-            if (colorData[parade] && colorData[parade].regular) {
-                total += colorData[parade].regular.count || 0;
+            if (colorData[parade]) {
+                if (parade === 'unaffiliated') {
+                    // For unaffiliated, aggregate all sizes + other.special into regular
+                    ['small', 'medium', 'large', 'nonSphere'].forEach(size => {
+                        if (colorData[parade][size]) {
+                            total += colorData[parade][size].count || 0;
+                        }
+                    });
+                    if (colorData[parade].other && colorData[parade].other.special) {
+                        total += colorData[parade].other.special.count || 0;
+                    }
+                } else {
+                    // For parades, count regular beads
+                    if (colorData[parade].regular) {
+                        total += colorData[parade].regular.count || 0;
+                    }
+                }
             }
         });
         return total;
@@ -422,10 +492,40 @@ function getBeadDataByType() {
     return { paradeLabels, medallionData, regularData };
 }
 
+// New function to get unaffiliated bead size breakdown
+function getUnaffiliatedSizeData() {
+    const sizeData = {
+        small: 0,
+        medium: 0,
+        large: 0,
+        nonSphere: 0,
+        medallion: 0,
+        special: 0
+    };
+    
+    Object.values(mardiGrasData.beads).forEach(colorData => {
+        if (colorData.unaffiliated) {
+            ['small', 'medium', 'large', 'nonSphere'].forEach(size => {
+                if (colorData.unaffiliated[size]) {
+                    sizeData[size] += colorData.unaffiliated[size].count || 0;
+                }
+            });
+            if (colorData.unaffiliated.other) {
+                if (colorData.unaffiliated.other.medallion) {
+                    sizeData.medallion += colorData.unaffiliated.other.medallion.count || 0;
+                }
+                if (colorData.unaffiliated.other.special) {
+                    sizeData.special += colorData.unaffiliated.other.special.count || 0;
+                }
+            }
+        }
+    });
+    
+    return sizeData;
+}
+
 function getItemsData() {
-    const parades = currentFilters.parade === 'all'
-        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
-        : [currentFilters.parade];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
 
     const data = {};
     
@@ -442,18 +542,11 @@ function getItemsData() {
 }
 
 function getDoubloonsData() {
-    if (currentFilters.parade === 'all') {
-        const data = {};
-        mardiGrasData.parades.forEach(parade => {
-            data[parade.shortName] = mardiGrasData.doubloons[parade.keyName]?.count || 0;
-        });
-        return data;
-    } else {
-        return {
-            [mardiGrasData.parades.find(p => p.keyName === currentFilters.parade).shortName]:
-                mardiGrasData.doubloons[currentFilters.parade]?.count || 0
-        };
-    }
+    const data = {};
+    mardiGrasData.parades.forEach(parade => {
+        data[parade.shortName] = mardiGrasData.doubloons[parade.keyName]?.count || 0;
+    });
+    return data;
 }
 
 function getParadeComparisonData() {
@@ -485,23 +578,184 @@ function getParadeComparisonData() {
     return { itemsData, weightData };
 }
 
+// New functions for Beads by Parade analysis
+function getBeadCountByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        let totalCount = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey]) {
+                totalCount += (colorData[paradeKey].medallion?.count || 0) + (colorData[paradeKey].regular?.count || 0);
+            }
+        });
+        data[paradeShortName] = totalCount;
+    });
+    
+    return data;
+}
+
+function getBeadWeightByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        let totalWeight = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey]) {
+                totalWeight += (colorData[paradeKey].medallion?.weight || 0) + (colorData[paradeKey].regular?.weight || 0);
+            }
+        });
+        data[paradeShortName] = totalWeight;
+    });
+    
+    return data;
+}
+
+function getColorDistributionByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        data[paradeShortName] = {};
+        
+        Object.keys(mardiGrasData.beads).forEach(color => {
+            const colorData = mardiGrasData.beads[color];
+            if (colorData[paradeKey]) {
+                const count = (colorData[paradeKey].medallion?.count || 0) + (colorData[paradeKey].regular?.count || 0);
+                if (count > 0) {
+                    data[paradeShortName][color] = count;
+                }
+            }
+        });
+    });
+    
+    return data;
+}
+
+function getMedallionCountByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        let medallionCount = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey] && colorData[paradeKey].medallion) {
+                medallionCount += colorData[paradeKey].medallion.count || 0;
+            }
+        });
+        data[paradeShortName] = medallionCount;
+    });
+    
+    return data;
+}
+
+function getColorVarietyByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        let colorCount = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey]) {
+                const count = (colorData[paradeKey].medallion?.count || 0) + (colorData[paradeKey].regular?.count || 0);
+                if (count > 0) {
+                    colorCount++;
+                }
+            }
+        });
+        data[paradeShortName] = colorCount;
+    });
+    
+    return data;
+}
+
+function getParadeWinners() {
+    const countData = getBeadCountByParade();
+    const weightData = getBeadWeightByParade();
+    const colorVarietyData = getColorVarietyByParade();
+    const medallionData = getMedallionCountByParade();
+    
+    // Find winners
+    let mostGenerous = { name: '', count: 0 };
+    let heaviest = { name: '', weight: 0 };
+    let mostColorful = { name: '', colorCount: 0 };
+    let medallionKing = { name: '', count: 0 };
+    
+    Object.entries(countData).forEach(([parade, count]) => {
+        if (count > mostGenerous.count) {
+            mostGenerous = { name: parade, count };
+        }
+    });
+    
+    Object.entries(weightData).forEach(([parade, weight]) => {
+        if (weight > heaviest.weight) {
+            heaviest = { name: parade, weight };
+        }
+    });
+    
+    Object.entries(colorVarietyData).forEach(([parade, colorCount]) => {
+        if (colorCount > mostColorful.colorCount) {
+            mostColorful = { name: parade, colorCount };
+        }
+    });
+    
+    Object.entries(medallionData).forEach(([parade, count]) => {
+        if (count > medallionKing.count) {
+            medallionKing = { name: parade, count };
+        }
+    });
+    
+    return { mostGenerous, heaviest, mostColorful, medallionKing };
+}
+
 // ========================================
 // Chart Rendering
 // ========================================
 
 function renderAllVisualizations() {
+    // Beads by Color Analysis
     updateBeadCharts();
+    
+    // Beads by Parade Analysis  
+    renderParadeBeadCharts();
+    
+    // Unaffiliated breakdown
+    renderUnaffiliatedSizeChart();
+    
+    // Other sections
     renderItemsChart();
     renderStuffedAnimalsChart();
     renderSpecialsChart();
-    renderDoubloonsChart();
-    renderMedallionVsRegularCharts(); // New visualization section
     
-    if (currentFilters.parade === 'all') {
-        renderParadeComparisonCharts();
-    }
-    
+    // Tables
     renderTables();
+}
+
+function renderParadeBeadCharts() {
+    // Charts moved from other sections
+    renderBeadTypesByParadeChart();
+    renderMedallionVsRegularByParadeChart();
+    
+    // New parade-focused charts
+    renderBeadCountByParadeChart();
+    renderBeadWeightByParadeChart();
+    renderColorDistributionByParadeChart();
+    renderDoubloonsChart();
+    
+    // Parade winners
+    renderParadeWinners();
 }
 
 function updateBeadCharts() {
@@ -510,7 +764,7 @@ function updateBeadCharts() {
     renderBeadCountChart(beadData);
     renderBeadWeightChart(beadData);
     renderBeadPercentageChart(beadData);
-    renderBeadTypesByParadeChart();
+    renderMedallionVsRegularByColorChart(); // Moved to color section
 }
 
 function renderBeadCountChart(beadData) {
@@ -574,7 +828,7 @@ function renderBeadCountChart(beadData) {
                 label: 'Count',
                 data: data,
                 backgroundColor: colors,
-                borderColor: colors.map(c => c),
+                borderColor: colors.map(c => getBorderColor(c)),
                 borderWidth: 2
             }]
         },
@@ -644,7 +898,7 @@ function renderBeadWeightChart(beadData) {
                 label: 'Weight (g)',
                 data: data,
                 backgroundColor: colors,
-                borderColor: colors.map(c => c),
+                borderColor: colors.map(c => getBorderColor(c)),
                 borderWidth: 2
             }]
         },
@@ -726,9 +980,7 @@ function renderBeadTypesByParadeChart() {
     const ctx = document.getElementById('beadTypesByParadeChart');
     
     // Get parades to display
-    const parades = currentFilters.parade === 'all'
-        ? ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)]
-        : [currentFilters.parade];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
     
     const paradeLabels = parades.map(p => {
         if (p === 'unaffiliated') return 'Unaffiliated';
@@ -1053,8 +1305,8 @@ function renderDoubloonsChart() {
     const doubloonsData = getDoubloonsData();
     const labels = Object.keys(doubloonsData);
     const data = Object.values(doubloonsData);
-    const isHorizontal = currentFilters.parade === 'all';
-    const colors = isHorizontal ? generateColorPattern(labels.length) : [CHART_COLORS.gold];
+    const isHorizontal = true; // Always horizontal since we show all parades
+    const colors = generateColorPattern(labels.length);
 
     if (charts.doubloons) charts.doubloons.destroy();
     
@@ -1125,6 +1377,9 @@ function renderMedallionVsRegularCharts() {
     
     // Render medallion vs regular by parade  
     renderMedallionVsRegularByParadeChart();
+    
+    // Render unaffiliated size breakdown
+    renderUnaffiliatedSizeChart();
 }
 
 function renderMedallionVsRegularByColorChart() {
@@ -1199,14 +1454,14 @@ function renderMedallionVsRegularByColorChart() {
                     label: 'Regular',
                     data: regularCounts,
                     backgroundColor: colors.map(c => c),
-                    borderColor: colors.map(c => c),
+                    borderColor: colors.map(c => getBorderColor(c)),
                     borderWidth: 2
                 },
                 {
                     label: 'Medallion',
                     data: medallionCounts,
                     backgroundColor: colors.map(c => c + 'CC'),
-                    borderColor: colors.map(c => c),
+                    borderColor: colors.map(c => getBorderColor(c)),
                     borderWidth: 2,
                     borderDash: [5, 5]
                 }
@@ -1302,6 +1557,92 @@ function renderMedallionVsRegularByParadeChart() {
                     borderWidth: 2
                 }
             ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderUnaffiliatedSizeChart() {
+    const ctx = document.getElementById('unaffiliatedSizeChart');
+    if (!ctx) return; // Chart element doesn't exist yet
+    
+    const sizeData = getUnaffiliatedSizeData();
+    const labels = ['Small', 'Medium', 'Large', 'Non-Sphere', 'Medallion', 'Special'];
+    const data = [
+        sizeData.small,
+        sizeData.medium,
+        sizeData.large,
+        sizeData.nonSphere,
+        sizeData.medallion,
+        sizeData.special
+    ];
+    
+    // Filter out zero values
+    const filteredData = [];
+    const filteredLabels = [];
+    labels.forEach((label, index) => {
+        if (data[index] > 0) {
+            filteredLabels.push(label);
+            filteredData.push(data[index]);
+        }
+    });
+    
+    if (filteredData.length === 0) {
+        // No unaffiliated beads, hide the chart
+        if (charts.unaffiliatedSize) charts.unaffiliatedSize.destroy();
+        return;
+    }
+    
+    const colors = generateColorPattern(filteredLabels.length);
+    
+    if (charts.unaffiliatedSize) charts.unaffiliatedSize.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20
+            }
+        },
+        plugins: {
+            legend: { 
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value > 0 ? value : ''
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.label}: ${context.parsed}`
+                }
+            }
+        }
+    };
+    
+    charts.unaffiliatedSize = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: filteredLabels,
+            datasets: [{
+                data: filteredData,
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
         },
         options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
@@ -1444,6 +1785,238 @@ function renderParadeComparisonCharts() {
         options: mergeChartOptions(weightBaseOptions),
         plugins: [ChartDataLabels]
     });
+}
+
+// ========================================
+// Beads by Parade Visualizations
+// ========================================
+
+function renderBeadCountByParadeChart() {
+    const ctx = document.getElementById('beadCountByParadeChart');
+    if (!ctx) return;
+    
+    const data = getBeadCountByParade();
+    const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(([parade]) => parade);
+    const values = sorted.map(([, count]) => count);
+    const colors = generateColorPattern(labels.length);
+    
+    if (charts.beadCountByParade) charts.beadCountByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: { left: 10, right: 60, top: 10, bottom: 10 }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: { weight: 'bold', size: 11 },
+                formatter: (value) => value.toLocaleString()
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true,
+                title: { display: true, text: 'Bead Count' },
+                ticks: { padding: 5 }
+            },
+            y: {
+                ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
+            }
+        }
+    };
+    
+    charts.beadCountByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Bead Count',
+                data: values,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderBeadWeightByParadeChart() {
+    const ctx = document.getElementById('beadWeightByParadeChart');
+    if (!ctx) return;
+    
+    const data = getBeadWeightByParade();
+    const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(([parade]) => parade);
+    const values = sorted.map(([, weight]) => weight);
+    const colors = generateColorPattern(labels.length);
+    
+    if (charts.beadWeightByParade) charts.beadWeightByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: { left: 10, right: 60, top: 10, bottom: 10 }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: { weight: 'bold', size: 11 },
+                formatter: (value) => value.toLocaleString() + 'g'
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true,
+                title: { display: true, text: 'Weight (grams)' },
+                ticks: { padding: 5 }
+            },
+            y: {
+                ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
+            }
+        }
+    };
+    
+    charts.beadWeightByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Bead Weight',
+                data: values,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderColorDistributionByParadeChart() {
+    const ctx = document.getElementById('colorDistributionByParadeChart');
+    if (!ctx) return;
+    
+    const distributionData = getColorDistributionByParade();
+    
+    // Sort parades by total count
+    const paradesSorted = Object.entries(distributionData)
+        .map(([parade, colors]) => ({
+            parade,
+            total: Object.values(colors).reduce((sum, count) => sum + count, 0),
+            colors
+        }))
+        .sort((a, b) => b.total - a.total);
+    
+    const paradeLabels = paradesSorted.map(p => p.parade);
+    
+    // Get all unique colors across all parades
+    const allColors = new Set();
+    paradesSorted.forEach(p => {
+        Object.keys(p.colors).forEach(color => allColors.add(color));
+    });
+    
+    // Create datasets for each color
+    const datasets = Array.from(allColors).map(color => {
+        const bgColor = BEAD_COLORS[color] || '#999';
+        return {
+            label: color.charAt(0).toUpperCase() + color.slice(1),
+            data: paradesSorted.map(p => p.colors[color] || 0),
+            backgroundColor: bgColor,
+            borderColor: getBorderColor(bgColor),
+            borderWidth: 1
+        };
+    });
+    
+    if (charts.colorDistributionByParade) charts.colorDistributionByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: { left: 10, right: 10, top: 10, bottom: 10 }
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: { padding: 8, boxWidth: 12, font: { size: 10 } }
+            },
+            datalabels: { display: false }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Bead Count' },
+                ticks: { padding: 5 }
+            },
+            y: {
+                stacked: true,
+                ticks: { padding: 10, autoSkip: false, font: { size: 10 } }
+            }
+        }
+    };
+    
+    charts.colorDistributionByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: paradeLabels,
+            datasets: datasets
+        },
+        options: mergeChartOptions(baseOptions)
+    });
+}
+
+function renderParadeWinners() {
+    const winners = getParadeWinners();
+    
+    // Most Generous
+    const mostGenerousEl = document.getElementById('paradeWinnerGenerous');
+    const mostGenerousDetailsEl = document.getElementById('paradeWinnerGenerousDetails');
+    if (mostGenerousEl && winners.mostGenerous.name) {
+        mostGenerousEl.textContent = winners.mostGenerous.name;
+        mostGenerousDetailsEl.textContent = `${winners.mostGenerous.count.toLocaleString()} beads`;
+    }
+    
+    // Heaviest
+    const heaviestEl = document.getElementById('paradeWinnerHeaviest');
+    const heaviestDetailsEl = document.getElementById('paradeWinnerHeaviestDetails');
+    if (heaviestEl && winners.heaviest.name) {
+        heaviestEl.textContent = winners.heaviest.name;
+        heaviestDetailsEl.textContent = `${winners.heaviest.weight.toLocaleString()}g`;
+    }
+    
+    // Most Colorful
+    const colorfulEl = document.getElementById('paradeWinnerColorful');
+    const colorfulDetailsEl = document.getElementById('paradeWinnerColorfulDetails');
+    if (colorfulEl && winners.mostColorful.name) {
+        colorfulEl.textContent = winners.mostColorful.name;
+        colorfulDetailsEl.textContent = `${winners.mostColorful.colorCount} colors`;
+    }
+    
+    // Medallion King
+    const medallionEl = document.getElementById('paradeWinnerMedallion');
+    const medallionDetailsEl = document.getElementById('paradeWinnerMedallionDetails');
+    if (medallionEl && winners.medallionKing.name) {
+        medallionEl.textContent = winners.medallionKing.name;
+        medallionDetailsEl.textContent = `${winners.medallionKing.count.toLocaleString()} medallions`;
+    }
 }
 
 // ========================================
