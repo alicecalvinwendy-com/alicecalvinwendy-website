@@ -262,6 +262,10 @@ section h3 {
     grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
 }
 
+.unaffiliated-grid {
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+}
+
 .parade-winners {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: var(--spacing-sm);
@@ -533,7 +537,8 @@ footer {
     .throws-grid,
     .comparison-grid,
     .medallion-grid,
-    .parade-beads-grid {
+    .parade-beads-grid,
+    .unaffiliated-grid {
         grid-template-columns: 1fr;
     }
     
@@ -639,7 +644,8 @@ footer {
     .throws-grid,
     .comparison-grid,
     .medallion-grid,
-    .parade-beads-grid {
+    .parade-beads-grid,
+    .unaffiliated-grid {
         grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
         overflow-x: auto;
         overflow-y: visible;

@@ -524,6 +524,42 @@ function getUnaffiliatedSizeData() {
     return sizeData;
 }
 
+// New function to get color breakdown by unaffiliated subtype
+function getUnaffiliatedColorBySubtype() {
+    const subtypes = ['small', 'medium', 'large', 'nonSphere', 'medallion', 'special'];
+    const data = {};
+    
+    // Initialize data structure: { subtype: { color: count } }
+    subtypes.forEach(subtype => {
+        data[subtype] = {};
+    });
+    
+    // Aggregate color counts for each subtype
+    Object.keys(mardiGrasData.beads).forEach(color => {
+        const colorData = mardiGrasData.beads[color];
+        if (colorData.unaffiliated) {
+            // Handle size-based subtypes
+            ['small', 'medium', 'large', 'nonSphere'].forEach(size => {
+                if (colorData.unaffiliated[size] && colorData.unaffiliated[size].count > 0) {
+                    data[size][color] = (data[size][color] || 0) + colorData.unaffiliated[size].count;
+                }
+            });
+            
+            // Handle other subtypes
+            if (colorData.unaffiliated.other) {
+                if (colorData.unaffiliated.other.medallion && colorData.unaffiliated.other.medallion.count > 0) {
+                    data['medallion'][color] = (data['medallion'][color] || 0) + colorData.unaffiliated.other.medallion.count;
+                }
+                if (colorData.unaffiliated.other.special && colorData.unaffiliated.other.special.count > 0) {
+                    data['special'][color] = (data['special'][color] || 0) + colorData.unaffiliated.other.special.count;
+                }
+            }
+        }
+    });
+    
+    return data;
+}
+
 function getItemsData() {
     const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
 
@@ -733,6 +769,7 @@ function renderAllVisualizations() {
     
     // Unaffiliated breakdown
     renderUnaffiliatedSizeChart();
+    renderUnaffiliatedColorBySubtypeChart();
     
     // Other sections
     renderItemsChart();
@@ -1652,6 +1689,94 @@ function renderUnaffiliatedSizeChart() {
         },
         options: mergeChartOptions(baseOptions),
         plugins: [ChartDataLabels]
+    });
+}
+
+function renderUnaffiliatedColorBySubtypeChart() {
+    const ctx = document.getElementById('unaffiliatedColorBySubtypeChart');
+    if (!ctx) return; // Chart element doesn't exist yet
+    
+    const colorBySubtype = getUnaffiliatedColorBySubtype();
+    const subtypeLabels = ['Small', 'Medium', 'Large', 'Non-Sphere', 'Medallion', 'Special'];
+    const subtypeKeys = ['small', 'medium', 'large', 'nonSphere', 'medallion', 'special'];
+    
+    // Filter out subtypes with no data
+    const activeSubtypes = [];
+    const activeLabels = [];
+    subtypeKeys.forEach((key, index) => {
+        if (Object.keys(colorBySubtype[key]).length > 0) {
+            activeSubtypes.push(key);
+            activeLabels.push(subtypeLabels[index]);
+        }
+    });
+    
+    if (activeSubtypes.length === 0) {
+        // No unaffiliated beads, hide the chart
+        if (charts.unaffiliatedColorBySubtype) charts.unaffiliatedColorBySubtype.destroy();
+        return;
+    }
+    
+    // Get all unique colors across all subtypes
+    const allColors = new Set();
+    activeSubtypes.forEach(subtype => {
+        Object.keys(colorBySubtype[subtype]).forEach(color => allColors.add(color));
+    });
+    
+    // Create datasets for each color
+    const datasets = Array.from(allColors).map(color => {
+        const bgColor = BEAD_COLORS[color] || '#999';
+        return {
+            label: color.charAt(0).toUpperCase() + color.slice(1),
+            data: activeSubtypes.map(subtype => colorBySubtype[subtype][color] || 0),
+            backgroundColor: bgColor,
+            borderColor: getBorderColor(bgColor),
+            borderWidth: 1
+        };
+    });
+    
+    if (charts.unaffiliatedColorBySubtype) charts.unaffiliatedColorBySubtype.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: { left: 10, right: 10, top: 10, bottom: 10 }
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: { padding: 8, boxWidth: 12, font: { size: 10 } }
+            },
+            datalabels: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: { padding: 5 }
+            },
+            y: {
+                stacked: true,
+                ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
+            }
+        }
+    };
+    
+    charts.unaffiliatedColorBySubtype = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: activeLabels,
+            datasets: datasets
+        },
+        options: mergeChartOptions(baseOptions)
     });
 }
 
