@@ -273,22 +273,38 @@ function mergeChartOptions(baseOptions) {
 // Helper function to calculate dynamic chart height based on number of data points
 function calculateChartHeight(dataPointCount, options = {}) {
     const {
-        orientation = 'vertical',    // 'vertical' or 'horizontal'
-        pixelsPerBar = isMobileView() ? 28 : 30,  // 25-30px for comfortable spacing
-        baseHeight = 150,            // For padding, title, axis labels, legend
-        minHeight = 300              // Minimum height for small datasets
+        orientation = 'vertical',
+        pixelsPerBar = isMobileView() ? 28 : 30,  // Comfortable spacing
+        baseHeight = 150,  // For padding, title, axis labels
+        minHeight = 300
     } = options;
     
     if (orientation === 'horizontal') {
         // For horizontal bars, height is determined by number of categories
         const calculated = (dataPointCount * pixelsPerBar) + baseHeight;
-        return Math.max(calculated, minHeight);
+        return Math.max(calculated, minHeight);  // No max cap!
     }
     
     // For vertical charts, use fixed minHeight (fewer data points typically)
     return minHeight;
 }
 
+// Helper function to set dynamic height on canvas wrapper
+function setCanvasHeight(ctx, height) {
+    // Wrap canvas in a div and set height on wrapper to prevent infinite expansion
+    let wrapper = ctx.parentElement;
+    if (!wrapper || !wrapper.classList.contains('chart-canvas-wrapper')) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'chart-canvas-wrapper';
+        const container = ctx.parentElement;
+        container.insertBefore(wrapper, ctx);
+        wrapper.appendChild(ctx);
+    }
+    wrapper.style.height = `${height}px`;
+}
+
+// ========================================
+// Chart.js Plugins
 // ========================================
 // Chart.js Plugins
 // ========================================
@@ -1719,11 +1735,7 @@ function renderBeadTypesByParadeChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     if (charts.beadTypesByParade) charts.beadTypesByParade.destroy();
     
@@ -1925,11 +1937,7 @@ function renderStuffedAnimalsChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
 
     if (charts.stuffedAnimals) charts.stuffedAnimals.destroy();
     
@@ -2011,11 +2019,7 @@ function renderAllItemsChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     // Generate distinct colors for all items
     const colors = generateDistinctColors(labels.length);
@@ -2141,11 +2145,7 @@ function renderItemsByParadeChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     // Generate distinct colors for each item type
     const itemColors = generateDistinctColors(itemTypes.length);
@@ -2277,11 +2277,7 @@ function renderStuffedAnimalsByParadeChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     // Generate distinct colors for each category
     const categoryColors = generateDistinctColors(categories.length);
@@ -2378,11 +2374,7 @@ function renderSpecialsChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     // Generate color pattern
     const colors = labels.map((_, index) => {
@@ -2473,11 +2465,7 @@ function renderDoubloonsChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
 
     if (charts.doubloons) charts.doubloons.destroy();
     
@@ -2576,11 +2564,7 @@ function renderMedallionVsRegularByColorChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     if (charts.medallionVsRegularColor) charts.medallionVsRegularColor.destroy();
     
@@ -2716,11 +2700,7 @@ function renderMedallionVsRegularByParadeChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     if (charts.medallionVsRegularParade) charts.medallionVsRegularParade.destroy();
     
@@ -2983,11 +2963,7 @@ function renderUnaffiliatedColorBySubtypeChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     const baseOptions = {
         responsive: true,
@@ -3225,11 +3201,7 @@ function renderBeadCountByParadeChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     if (charts.beadCountByParade) charts.beadCountByParade.destroy();
     
@@ -3309,11 +3281,7 @@ function renderBeadWeightByParadeChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     if (charts.beadWeightByParade) charts.beadWeightByParade.destroy();
     
@@ -3425,11 +3393,7 @@ function renderColorDistributionByParadeChart() {
         orientation: 'horizontal',
         pixelsPerBar: isMobileView() ? 28 : 30 
     });
-    const container = ctx.parentElement;
-    if (container) {
-        container.style.height = `${height}px`;
-        container.style.maxHeight = 'none';
-    }
+    setCanvasHeight(ctx, height);
     
     if (charts.colorDistributionByParade) charts.colorDistributionByParade.destroy();
     
