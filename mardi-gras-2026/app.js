@@ -922,25 +922,28 @@ function renderBeadPercentageChart(beadData) {
         maintainAspectRatio: false,
         layout: {
             padding: {
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: 20
+                left: isMobileView() ? 5 : 10,
+                right: isMobileView() ? 5 : 10,
+                top: isMobileView() ? 5 : 10,
+                bottom: isMobileView() ? 5 : 10
             }
         },
         plugins: {
             legend: { 
                 position: isMobileView() ? 'bottom' : 'right',
                 labels: {
-                    padding: 10,
-                    boxWidth: 15
+                    padding: isMobileView() ? 6 : 10,
+                    boxWidth: isMobileView() ? 12 : 15,
+                    font: {
+                        size: isMobileView() ? 10 : 12
+                    }
                 }
             },
             datalabels: {
                 color: '#fff',
                 font: {
                     weight: 'bold',
-                    size: 12
+                    size: isMobileView() ? 10 : 12
                 },
                 formatter: (value, context) => {
                     const percentage = ((value / total) * 100).toFixed(1);
