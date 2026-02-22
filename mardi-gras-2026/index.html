@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mardi Gras 2026 - Throws Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Loading Mardi Gras data...</p>
+    </div>
+
+    <header class="hero">
+        <h1>🎭 Mardi Gras 2026 Throws Tracker</h1>
+        <p class="subtitle">Interactive infographic of all the throws we caught!</p>
+    </header>
+
+    <main id="app" style="display: none;">
+        <!-- Parade Summary Grid -->
+        <section class="parade-summary">
+            <h2>Parades Attended</h2>
+            <div class="parade-grid" id="paradeGrid"></div>
+        </section>
+
+        <!-- Overall Statistics -->
+        <section class="statistics">
+            <div class="section-header">
+                <h2>Overall Statistics</h2>
+                <div class="weight-unit-selector">
+                    <label for="weightUnit">Weight Unit:</label>
+                    <select id="weightUnit">
+                        <option value="grams">Grams (g)</option>
+                        <option value="pounds">Pounds (lbs)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon">📿</div>
+                    <div class="stat-value" id="totalBeadsCount">0</div>
+                    <div class="stat-label">Total Beads</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚖️</div>
+                    <div class="stat-value" id="totalBeadsWeight">0g</div>
+                    <div class="stat-label">Total Weight</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🪙</div>
+                    <div class="stat-value" id="totalDoubloons">0</div>
+                    <div class="stat-label">Doubloons</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎁</div>
+                    <div class="stat-value" id="totalItems">0</div>
+                    <div class="stat-label">Throw Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🧸</div>
+                    <div class="stat-value" id="totalStuffedAnimals">0</div>
+                    <div class="stat-label">Stuffed Animals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚽</div>
+                    <div class="stat-value" id="totalBalls">0</div>
+                    <div class="stat-label">Balls</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value" id="totalSpecials">0</div>
+                    <div class="stat-label">Special Items</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Beads Section -->
+        <section class="beads-section">
+            <h2>Beads by Color Analysis</h2>
+            
+            <div class="charts-grid beads-grid">
+                <div class="chart-container">
+                    <h3>Bead Count by Color</h3>
+                    <canvas id="beadCountChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Bead Weight by Color (grams)</h3>
+                    <canvas id="beadWeightChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Bead Distribution (%)</h3>
+                    <canvas id="beadPercentageChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>🏆 Winners</h3>
+                    <div class="winners-display">
+                        <div class="winner-card">
+                            <div class="winner-icon">👑</div>
+                            <div class="winner-label">Most Beads</div>
+                            <div class="winner-value" id="winnerCount">-</div>
+                            <div class="winner-subtext" id="winnerCountDetails">-</div>
+                        </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">⚖️</div>
+                            <div class="winner-label">Heaviest</div>
+                            <div class="winner-value" id="winnerWeight">-</div>
+                            <div class="winner-subtext" id="winnerWeightDetails">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Medallion vs Regular by Color</h3>
+                    <canvas id="medallionVsRegularColorChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Parade Winners Section -->
+        <section class="parade-winners-section">
+            <h2>Parade Winners</h2>
+            <p class="section-description">Top performing parades across different categories</p>
+            <div class="winners-display parade-winners">
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">👑</div>
+                    <div class="winner-label">Most Generous</div>
+                    <div class="winner-value" id="paradeWinnerGenerous">-</div>
+                    <div class="winner-subtext" id="paradeWinnerGenerousDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">⚖️</div>
+                    <div class="winner-label">Heaviest Haul</div>
+                    <div class="winner-value" id="paradeWinnerHeaviest">-</div>
+                    <div class="winner-subtext" id="paradeWinnerHeaviestDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🎨</div>
+                    <div class="winner-label">Most Colorful</div>
+                    <div class="winner-value" id="paradeWinnerColorful">-</div>
+                    <div class="winner-subtext" id="paradeWinnerColorfulDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🥇</div>
+                    <div class="winner-label">Medallion King</div>
+                    <div class="winner-value" id="paradeWinnerMedallion">-</div>
+                    <div class="winner-subtext" id="paradeWinnerMedallionDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🪙</div>
+                    <div class="winner-label">Most Doubloons</div>
+                    <div class="winner-value" id="paradeWinnerDoubloons">-</div>
+                    <div class="winner-subtext" id="paradeWinnerDoubloonsDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🧸</div>
+                    <div class="winner-label">Most Stuffed Animals</div>
+                    <div class="winner-value" id="paradeWinnerStuffedAnimals">-</div>
+                    <div class="winner-subtext" id="paradeWinnerStuffedAnimalsDetails">-</div>
+                </div>
+                <div class="winner-card parade-winner-card">
+                    <div class="winner-icon">🎁</div>
+                    <div class="winner-label">Most Throws</div>
+                    <div class="winner-value" id="paradeWinnerThrows">-</div>
+                    <div class="winner-subtext" id="paradeWinnerThrowsDetails">-</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Beads by Parade Section -->
+        <section class="parade-beads-section">
+            <h2>Beads by Parade</h2>
+            <p class="section-description">Analysis of bead catches organized by parade</p>
+            
+            <div class="charts-grid parade-beads-grid">
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Bead Color Distribution by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('colorDistributionByParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="colorDistributionByParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('colorDistributionByParade')">Select All</button>
+                            <button onclick="deselectAllParades('colorDistributionByParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="colorDistributionByParadeFilterOptions"></div>
+                    </div>
+                    <canvas id="colorDistributionByParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Light-up vs Regular by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('lightUpVsRegularParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="lightUpVsRegularParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('lightUpVsRegularParade')">Select All</button>
+                            <button onclick="deselectAllParades('lightUpVsRegularParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="lightUpVsRegularParadeFilterOptions"></div>
+                    </div>
+                    <canvas id="lightUpVsRegularParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Medallion vs Regular by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('medallionVsRegularParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="medallionVsRegularParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('medallionVsRegularParade')">Select All</button>
+                            <button onclick="deselectAllParades('medallionVsRegularParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="medallionVsRegularParadeFilterOptions"></div>
+                    </div>
+                    <canvas id="medallionVsRegularParadeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Total Bead Count by Parade</h3>
+                    <canvas id="beadCountByParadeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Total Bead Weight by Parade</h3>
+                    <canvas id="beadWeightByParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Doubloons by Parade</h3>
+                    <canvas id="doubloonsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Unaffiliated Beads Breakdown Section -->
+        <section class="unaffiliated-section">
+            <h2>Unaffiliated Beads Breakdown</h2>
+            <p class="section-description">Shape distribution of non-branded beads caught during parades</p>
+            <div class="charts-grid unaffiliated-grid">
+                <div class="chart-container">
+                    <h3>Unaffiliated Beads by Shape</h3>
+                    <canvas id="unaffiliatedSizeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>🏆 Winners</h3>
+                    <div class="winners-display unaffiliated-winners">
+                        <div class="winner-card">
+                            <div class="winner-icon">👑</div>
+                            <div class="winner-label">Most Common</div>
+                            <div class="winner-value" id="unaffiliatedWinnerShape">-</div>
+                            <div class="winner-subtext" id="unaffiliatedWinnerShapeDetails">-</div>
+                        </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">🎨</div>
+                            <div class="winner-label">Most Colorful</div>
+                            <div class="winner-value" id="unaffiliatedWinnerColor">-</div>
+                            <div class="winner-subtext" id="unaffiliatedWinnerColorDetails">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Color Breakdown by Shape</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('unaffiliatedColorBySubtypeFilter')">
+                            <span>Filter Shapes</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="unaffiliatedColorBySubtypeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllShapes()">Select All</button>
+                            <button onclick="deselectAllShapes()">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="unaffiliatedColorBySubtypeFilterOptions"></div>
+                    </div>
+                    <canvas id="unaffiliatedColorBySubtypeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Throws Section -->
+        <section class="throws-section">
+            <h2>Throws & Items</h2>
+            <div class="charts-grid throws-grid">
+                <div class="chart-container">
+                    <h3>Items Distribution</h3>
+                    <canvas id="itemsChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>🏆 Winners</h3>
+                    <div class="winners-display">
+                        <div class="winner-card">
+                            <div class="winner-icon">🎁</div>
+                            <div class="winner-label">Most Common Item</div>
+                            <div class="winner-value" id="winnerItemMost">-</div>
+                            <div class="winner-subtext" id="winnerItemMostDetails">-</div>
+                        </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">🧸</div>
+                            <div class="winner-label">Most Common Stuffed Animal</div>
+                            <div class="winner-value" id="winnerStuffedAnimal">-</div>
+                            <div class="winner-subtext" id="winnerStuffedAnimalDetails">-</div>
+                        </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">🎾</div>
+                            <div class="winner-label">Most Common Ball Type</div>
+                            <div class="winner-value" id="ballTypeWinnerCommon">-</div>
+                            <div class="winner-subtext" id="ballTypeWinnerCommonDetails">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>All Items Caught</h3>
+                    <canvas id="allItemsChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Items by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('itemsByParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="itemsByParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('itemsByParade')">Select All</button>
+                            <button onclick="deselectAllParades('itemsByParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="itemsByParadeFilterOptions"></div>
+                    </div>
+                    <canvas id="itemsByParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Stuffed Animals by Type</h3>
+                    <canvas id="stuffedAnimalsChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Stuffed Animals by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('stuffedAnimalsByParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="stuffedAnimalsByParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('stuffedAnimalsByParade')">Select All</button>
+                            <button onclick="deselectAllParades('stuffedAnimalsByParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="stuffedAnimalsByParadeFilterOptions"></div>
+                    </div>
+                    <canvas id="stuffedAnimalsByParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Balls by Type</h3>
+                    <canvas id="ballsByTypeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <div class="chart-header">
+                        <h3>Balls by Parade</h3>
+                        <button class="filter-toggle" onclick="toggleFilter('ballsByParadeFilter')">
+                            <span>Filter Parades</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+                    </div>
+                    <div class="filter-panel" id="ballsByParadeFilter">
+                        <div class="filter-actions">
+                            <button onclick="selectAllParades('ballsByParade')">Select All</button>
+                            <button onclick="deselectAllParades('ballsByParade')">Deselect All</button>
+                        </div>
+                        <div class="filter-options" id="ballsByParadeFilterOptions"></div>
+                    </div>
+                    <canvas id="ballsByParadeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Special Items -->
+        <section class="specials-section">
+            <h2>Special Items</h2>
+            <p class="section-description" id="specialsDescription">Loading...</p>
+            <div class="chart-container chart-wide">
+                <canvas id="specialsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Data Tables -->
+        <section class="tables-section">
+            <h2>Detailed Breakdown</h2>
+            
+            <div class="table-container">
+                <h3>Beads by Color & Parade</h3>
+                <div class="table-scroll">
+                    <table id="beadsTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="color">Color</th>
+                                <th class="sortable" data-sort="count">Total Count</th>
+                                <th class="sortable" data-sort="weight" id="weightColumnHeader">Total Weight (g)</th>
+                                <th class="sortable" data-sort="medallion">Medallion</th>
+                                <th class="sortable" data-sort="regular">Regular</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3>Throws by Item & Parade</h3>
+                <div class="table-scroll">
+                    <table id="throwsTable" class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" data-sort="item">Item</th>
+                                <th class="sortable" data-sort="count">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Laissez les bons temps rouler! 🎉</p>
+    </footer>
+
+    <!-- Load data first, then the app -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

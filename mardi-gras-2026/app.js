@@ -1,0 +1,4243 @@
+// ========================================
+// Mardi Gras 2026 - Throws Tracker App
+// Updated: 2026-02-21 21:30
+// ========================================
+// Data is loaded from data.js which is included before this script.
+// Edit data.js to update parade and throws information.
+
+// Global state
+let charts = {};
+let weightUnit = 'grams'; // Default weight unit: 'grams' or 'pounds'
+
+// Filter state
+let filters = {
+    colorDistributionByParade: new Set(),
+    lightUpVsRegularParade: new Set(),
+    medallionVsRegularParade: new Set(),
+    itemsByParade: new Set(),
+    stuffedAnimalsByParade: new Set(),
+    ballsByParade: new Set(),
+    unaffiliatedColorBySubtype: new Set()
+};
+
+// Helper function to convert grams to pounds
+function gramsToLbs(grams) {
+    return grams / 453.592; // 1 pound = 453.592 grams
+}
+
+// Helper function to format weight based on current unit
+function formatWeight(grams) {
+    if (weightUnit === 'pounds') {
+        const pounds = gramsToLbs(grams);
+        return pounds.toFixed(2) + ' lbs';
+    } else {
+        return Math.round(grams).toLocaleString() + 'g';
+    }
+}
+
+// Bead color mapping for visualization
+const BEAD_COLORS = {
+    purple: '#8B5FBF',
+    green: '#3CB371',
+    gold: '#FDB927',
+    red: '#DC143C',
+    blue: '#4169E1',
+    pink: '#FF69B4',
+    white: '#F5F5F5',
+    orange: '#FF8C00',
+    black: '#2F4F4F',
+    silver: '#C0C0C0',
+    glass: '#E0F7FA',
+    lightup: '#FFD700',
+    medallion: '#DAA520',
+    special: '#9C27B0'
+};
+
+// Mardi Gras theme colors for charts
+const CHART_COLORS = {
+    purple: '#5E2C89',
+    green: '#00873D',
+    gold: '#D4AF37'
+};
+
+// Helper function to generate evenly-spaced colors around the color wheel
+function generateDistinctColors(count) {
+    const colors = [];
+    const hueStep = 360 / count; // Divide color wheel evenly
+    const saturation = 70; // Keep saturation consistent for vibrancy
+    const lightness = 55; // Keep lightness consistent for readability
+    
+    for (let i = 0; i < count; i++) {
+        const hue = Math.round(i * hueStep);
+        colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+    }
+    
+    return colors;
+}
+
+// Item-specific colors for Items Distribution chart (deprecated - using dynamic colors now)
+const ITEM_COLORS = {
+    beads: '#8B5FBF',           // 270° - Purple medium - signature Mardi Gras item
+    cups: '#E91E63',            // 330° - Deep pink - festive
+    hats: '#FF5722',            // 15° - Deep orange/red - fun and bold
+    sunglasses: '#FF9800',      // 36° - Orange - bright
+    coconuts: '#FDD835',        // 54° - Yellow - natural
+    footballs: '#8BC34A',       // 88° - Light green - sports/field
+    frisbees: '#009688',        // 174° - Teal - playful
+    'stuffed animals': '#03A9F4', // 199° - Light blue - soft and cute
+    doubloons: '#2196F3',       // 207° - Blue - classic
+    toys: '#3F51B5',            // 231° - Indigo - playful energy
+    flags: '#673AB7',           // 262° - Deep purple - festive
+    banners: '#9C27B0',         // 291° - Purple - regal
+    'light up items': '#E91E63', // 330° - Magenta - glowing
+    masks: '#F44336',           // 4° - Red - mysterious masquerade
+    medallions: '#D4AF37'       // 45° - Gold - precious metal
+};
+
+// Helper function to generate repeating purple, green, gold pattern
+function generateColorPattern(count) {
+    const pattern = [CHART_COLORS.purple, CHART_COLORS.green, CHART_COLORS.gold];
+    const colors = [];
+    for (let i = 0; i < count; i++) {
+        colors.push(pattern[i % 3]);
+    }
+    return colors;
+}
+
+// Helper function to get border color for bars (darker for light colors)
+function getBorderColor(backgroundColor) {
+    // For white, silver, and other light colors, use dark gray border
+    const lightColors = ['#F5F5F5', '#C0C0C0', '#E0F7FA', '#FFD700', '#FDB927'];
+    if (lightColors.includes(backgroundColor)) {
+        return '#333333';
+    }
+    // For all other colors, use the same color but darker
+    return backgroundColor;
+}
+
+// Helper function to calculate relative luminance of a color
+function getLuminance(color) {
+    // Convert hex or hsl to RGB
+    let r, g, b;
+    
+    if (color.startsWith('#')) {
+        // Hex color
+        const hex = color.replace('#', '');
+        r = parseInt(hex.substr(0, 2), 16) / 255;
+        g = parseInt(hex.substr(2, 2), 16) / 255;
+        b = parseInt(hex.substr(4, 2), 16) / 255;
+    } else if (color.startsWith('hsl')) {
+        // HSL color - convert to RGB
+        const hslMatch = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+        if (hslMatch) {
+            const h = parseInt(hslMatch[1]) / 360;
+            const s = parseInt(hslMatch[2]) / 100;
+            const l = parseInt(hslMatch[3]) / 100;
+            
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        } else {
+            return 0.5; // Fallback
+        }
+    } else if (color.startsWith('rgb')) {
+        // RGB color
+        const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (rgbMatch) {
+            r = parseInt(rgbMatch[1]) / 255;
+            g = parseInt(rgbMatch[2]) / 255;
+            b = parseInt(rgbMatch[3]) / 255;
+        } else {
+            return 0.5; // Fallback
+        }
+    } else {
+        return 0.5; // Fallback for unknown formats
+    }
+    
+    // Apply gamma correction
+    r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+    g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+    b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+    
+    // Calculate relative luminance
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+// Helper function to get contrasting text color (black or white)
+function getContrastColor(backgroundColor) {
+    const luminance = getLuminance(backgroundColor);
+    // Use white text for dark backgrounds (luminance < 0.5), black for light backgrounds
+    return luminance > 0.5 ? '#2D1B4E' : '#FFFFFF';
+}
+
+// Helper function to detect mobile screens
+function isMobileView() {
+    return window.innerWidth <= 480;
+}
+
+// Helper function to get mobile-optimized chart configuration
+function getMobileChartOptions() {
+    if (!isMobileView()) return {};
+    
+    return {
+        layout: {
+            padding: {
+                left: 5,
+                right: 5,
+                top: 15,
+                bottom: 5
+            }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    font: {
+                        size: 11
+                    },
+                    padding: 8
+                }
+            },
+            title: {
+                font: {
+                    size: 14
+                }
+            },
+            datalabels: {
+                font: {
+                    size: 10
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    font: {
+                        size: 11
+                    },
+                    padding: 3
+                },
+                title: {
+                    font: {
+                        size: 11
+                    }
+                }
+            },
+            y: {
+                ticks: {
+                    font: {
+                        size: 11
+                    },
+                    padding: 3
+                },
+                title: {
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+}
+
+// Helper function to merge chart options with mobile optimizations
+function mergeChartOptions(baseOptions) {
+    if (!isMobileView()) return baseOptions;
+    
+    const mobileOptions = getMobileChartOptions();
+    
+    // Deep merge function
+    function deepMerge(target, source) {
+        const output = { ...target };
+        for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                output[key] = deepMerge(target[key] || {}, source[key]);
+            } else {
+                output[key] = source[key];
+            }
+        }
+        return output;
+    }
+    
+    return deepMerge(baseOptions, mobileOptions);
+}
+
+// Helper function to calculate dynamic chart height based on number of data points
+function calculateChartHeight(dataPointCount, options = {}) {
+    const {
+        orientation = 'vertical',
+        pixelsPerBar = isMobileView() ? 28 : 30,  // Comfortable spacing
+        baseHeight = 150,  // For padding, title, axis labels
+        minHeight = 300
+    } = options;
+    
+    if (orientation === 'horizontal') {
+        // For horizontal bars, height is determined by number of categories
+        const calculated = (dataPointCount * pixelsPerBar) + baseHeight;
+        return Math.max(calculated, minHeight);  // No max cap!
+    }
+    
+    // For vertical charts, use fixed minHeight (fewer data points typically)
+    return minHeight;
+}
+
+// Helper function to set dynamic height on canvas wrapper
+function setCanvasHeight(ctx, height) {
+    // Wrap canvas in a div and set height on wrapper to prevent infinite expansion
+    let wrapper = ctx.parentElement;
+    if (!wrapper || !wrapper.classList.contains('chart-canvas-wrapper')) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'chart-canvas-wrapper';
+        const container = ctx.parentElement;
+        container.insertBefore(wrapper, ctx);
+        wrapper.appendChild(ctx);
+    }
+    wrapper.style.height = `${height}px`;
+}
+
+// ========================================
+// Chart.js Plugins
+// ========================================
+// Chart.js Plugins
+// ========================================
+
+// Plugin to enforce minimum bar length for non-zero values in stacked horizontal bar charts
+const minBarLengthPlugin = {
+    id: 'minBarLength',
+    beforeDatasetsDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        const xScale = scales.x;
+        const yScale = scales.y;
+        
+        // Only apply to horizontal bar charts with stacked data
+        if (chart.config.type !== 'bar' || chart.config.options.indexAxis !== 'y') {
+            return;
+        }
+        
+        // Minimum visual width in pixels for non-zero values
+        const MIN_BAR_WIDTH = 25;
+        
+        // Iterate through each dataset
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta.visible) return;
+            
+            meta.data.forEach((bar, index) => {
+                const value = dataset.data[index];
+                
+                // Only apply to non-zero values
+                if (value <= 0) return;
+                
+                // Calculate the actual bar width
+                const barWidth = bar.width;
+                
+                // If bar is too small, artificially extend it
+                if (barWidth < MIN_BAR_WIDTH && barWidth > 0) {
+                    bar.width = MIN_BAR_WIDTH;
+                }
+            });
+        });
+    }
+};
+
+// ========================================
+// Filter Functions
+// ========================================
+
+function toggleFilter(filterId) {
+    const filterPanel = document.getElementById(filterId);
+    const button = filterPanel.previousElementSibling.querySelector('.filter-toggle');
+    
+    if (filterPanel.classList.contains('open')) {
+        filterPanel.classList.remove('open');
+        button.classList.remove('active');
+    } else {
+        filterPanel.classList.add('open');
+        button.classList.add('active');
+    }
+}
+
+function initializeParadeFilters(chartId, parades) {
+    const filterOptionsEl = document.getElementById(`${chartId}FilterOptions`);
+    if (!filterOptionsEl) return;
+    
+    // Initialize all parades as selected
+    filters[chartId] = new Set(parades);
+    
+    filterOptionsEl.innerHTML = parades.map(parade => `
+        <div class="filter-option">
+            <input type="checkbox" id="${chartId}-${parade}" value="${parade}" checked 
+                   onchange="onParadeFilterChange('${chartId}', '${parade}', this.checked)">
+            <label for="${chartId}-${parade}">${parade}</label>
+        </div>
+    `).join('');
+}
+
+function onParadeFilterChange(chartId, parade, checked) {
+    if (checked) {
+        filters[chartId].add(parade);
+    } else {
+        filters[chartId].delete(parade);
+    }
+    
+    // Re-render the appropriate chart
+    if (chartId === 'colorDistributionByParade') {
+        renderColorDistributionByParadeChart();
+    } else if (chartId === 'lightUpVsRegularParade') {
+        renderLightUpVsRegularByParadeChart();
+    } else if (chartId === 'medallionVsRegularParade') {
+        renderMedallionVsRegularByParadeChart();
+    } else if (chartId === 'itemsByParade') {
+        renderItemsByParadeChart();
+    } else if (chartId === 'stuffedAnimalsByParade') {
+        renderStuffedAnimalsByParadeChart();
+    } else if (chartId === 'ballsByParade') {
+        renderBallsByParadeChart();
+    }
+}
+
+function selectAllParades(chartId) {
+    const filterOptionsEl = document.getElementById(`${chartId}FilterOptions`);
+    const checkboxes = filterOptionsEl.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        filters[chartId].add(checkbox.value);
+    });
+    
+    // Re-render the appropriate chart
+    if (chartId === 'colorDistributionByParade') {
+        renderColorDistributionByParadeChart();
+    } else if (chartId === 'lightUpVsRegularParade') {
+        renderLightUpVsRegularByParadeChart();
+    } else if (chartId === 'medallionVsRegularParade') {
+        renderMedallionVsRegularByParadeChart();
+    } else if (chartId === 'itemsByParade') {
+        renderItemsByParadeChart();
+    } else if (chartId === 'stuffedAnimalsByParade') {
+        renderStuffedAnimalsByParadeChart();
+    } else if (chartId === 'ballsByParade') {
+        renderBallsByParadeChart();
+    }
+}
+
+function deselectAllParades(chartId) {
+    const filterOptionsEl = document.getElementById(`${chartId}FilterOptions`);
+    const checkboxes = filterOptionsEl.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        filters[chartId].delete(checkbox.value);
+    });
+    
+    // Re-render the appropriate chart
+    if (chartId === 'colorDistributionByParade') {
+        renderColorDistributionByParadeChart();
+    } else if (chartId === 'lightUpVsRegularParade') {
+        renderLightUpVsRegularByParadeChart();
+    } else if (chartId === 'medallionVsRegularParade') {
+        renderMedallionVsRegularByParadeChart();
+    } else if (chartId === 'itemsByParade') {
+        renderItemsByParadeChart();
+    } else if (chartId === 'stuffedAnimalsByParade') {
+        renderStuffedAnimalsByParadeChart();
+    } else if (chartId === 'ballsByParade') {
+        renderBallsByParadeChart();
+    }
+}
+
+function initializeShapeFilters(shapes) {
+    const filterOptionsEl = document.getElementById('unaffiliatedColorBySubtypeFilterOptions');
+    if (!filterOptionsEl) return;
+    
+    // Initialize all shapes as selected
+    filters.unaffiliatedColorBySubtype = new Set(shapes.map(s => s.key));
+    
+    filterOptionsEl.innerHTML = shapes.map(shape => `
+        <div class="filter-option">
+            <input type="checkbox" id="shape-${shape.key}" value="${shape.key}" checked 
+                   onchange="onShapeFilterChange('${shape.key}', this.checked)">
+            <label for="shape-${shape.key}">${shape.label}</label>
+        </div>
+    `).join('');
+}
+
+function onShapeFilterChange(shapeKey, checked) {
+    if (checked) {
+        filters.unaffiliatedColorBySubtype.add(shapeKey);
+    } else {
+        filters.unaffiliatedColorBySubtype.delete(shapeKey);
+    }
+    
+    renderUnaffiliatedColorBySubtypeChart();
+}
+
+function selectAllShapes() {
+    const filterOptionsEl = document.getElementById('unaffiliatedColorBySubtypeFilterOptions');
+    const checkboxes = filterOptionsEl.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        filters.unaffiliatedColorBySubtype.add(checkbox.value);
+    });
+    
+    renderUnaffiliatedColorBySubtypeChart();
+}
+
+function deselectAllShapes() {
+    const filterOptionsEl = document.getElementById('unaffiliatedColorBySubtypeFilterOptions');
+    const checkboxes = filterOptionsEl.querySelectorAll('input[type="checkbox"]');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        filters.unaffiliatedColorBySubtype.delete(checkbox.value);
+    });
+    
+    renderUnaffiliatedColorBySubtypeChart();
+}
+
+// ========================================
+// Initialization
+// ========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        console.log('Starting initialization...');
+        initializeUI();
+        console.log('UI initialized');
+        renderAllVisualizations();
+        console.log('Visualizations rendered');
+        hideLoading();
+        console.log('Initialization complete');
+    } catch (error) {
+        console.error('Error initializing app:', error);
+        console.error('Error stack:', error.stack);
+        showError('Failed to initialize. Please refresh the page.');
+    }
+});
+
+// ========================================
+// Helper Functions
+// ========================================
+
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+}
+
+function showError(message) {
+    document.getElementById('loading').innerHTML = `
+        <div style="text-align: center; color: #DC143C;">
+            <h2>⚠️ Error</h2>
+            <p>${message}</p>
+            <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer;">
+                Retry
+            </button>
+        </div>
+    `;
+}
+
+// ========================================
+// UI Initialization
+// ========================================
+
+function initializeUI() {
+    renderParadeGrid();
+    renderStatistics();
+    setupEventListeners();
+    
+    // Set special items description from data
+    const specialsDescEl = document.getElementById('specialsDescription');
+    if (specialsDescEl && mardiGrasData.throws.specials.description) {
+        specialsDescEl.textContent = mardiGrasData.throws.specials.description.text;
+    }
+}
+
+function renderParadeGrid() {
+    const grid = document.getElementById('paradeGrid');
+    grid.innerHTML = mardiGrasData.parades.map(parade => `
+        <div class="parade-card" data-parade="${parade.keyName}">
+            <img src="${parade.logo}" alt="${parade.name}" class="parade-logo" 
+                 onerror="this.style.display='none'">
+            <div class="parade-name">${parade.name}</div>
+            <div class="parade-date">${parade.date}</div>
+            <div class="parade-time">${parade.time}</div>
+        </div>
+    `).join('');
+}
+
+function setupEventListeners() {
+    // Table sorting
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.addEventListener('click', () => sortTable(header));
+    });
+    
+    // Weight unit selector
+    const weightUnitSelector = document.getElementById('weightUnit');
+    if (weightUnitSelector) {
+        weightUnitSelector.addEventListener('change', (e) => {
+            weightUnit = e.target.value;
+            // Re-render all weight-related displays
+            renderStatistics();
+            updateBeadCharts();
+            renderParadeBeadCharts();
+            renderTables();
+        });
+    }
+}
+
+// ========================================
+// Statistics Calculation
+// ========================================
+
+function calculateStatistics() {
+    const stats = {
+        totalBeadsCount: 0,
+        totalBeadsWeight: 0,
+        totalDoubloons: 0,
+        totalItems: 0,
+        totalStuffedAnimals: 0,
+        totalBalls: 0,
+        totalSpecials: 0
+    };
+
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+
+    // Calculate beads
+    Object.values(mardiGrasData.beads).forEach(colorData => {
+        parades.forEach(parade => {
+            if (colorData[parade]) {
+                const paradeData = colorData[parade];
+                
+                if (parade === 'unaffiliated') {
+                    // Handle unaffiliated size-based structure
+                    ['small', 'medium', 'large', 'nonSphere'].forEach(size => {
+                        if (paradeData[size]) {
+                            stats.totalBeadsCount += paradeData[size].count || 0;
+                            stats.totalBeadsWeight += paradeData[size].weight || 0;
+                        }
+                    });
+                    if (paradeData.other) {
+                        if (paradeData.other.medallion) {
+                            stats.totalBeadsCount += paradeData.other.medallion.count || 0;
+                            stats.totalBeadsWeight += paradeData.other.medallion.weight || 0;
+                        }
+                        if (paradeData.other.special) {
+                            stats.totalBeadsCount += paradeData.other.special.count || 0;
+                            stats.totalBeadsWeight += paradeData.other.special.weight || 0;
+                        }
+                    }
+                } else {
+                    // Handle parade beads (medallion/regular structure)
+                    if (paradeData.medallion) {
+                        stats.totalBeadsCount += paradeData.medallion.count || 0;
+                        stats.totalBeadsWeight += paradeData.medallion.weight || 0;
+                    }
+                    if (paradeData.regular) {
+                        stats.totalBeadsCount += paradeData.regular.count || 0;
+                        stats.totalBeadsWeight += paradeData.regular.weight || 0;
+                    }
+                }
+            }
+        });
+    });
+
+    // Calculate doubloons
+    parades.forEach(parade => {
+        if (mardiGrasData.doubloons[parade]) {
+            stats.totalDoubloons += mardiGrasData.doubloons[parade].count || 0;
+        }
+    });
+
+    // Calculate items
+    Object.values(mardiGrasData.throws.items).forEach(itemData => {
+        parades.forEach(parade => {
+            if (itemData[parade]) {
+                stats.totalItems += itemData[parade].count || 0;
+            }
+        });
+    });
+
+    // Calculate stuffed animals
+    Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                stats.totalStuffedAnimals += categoryData[parade].count || 0;
+            }
+        });
+    });
+
+    // Calculate balls
+    if (mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        Object.values(mardiGrasData.throws['Stuffed Animals']['Balls']).forEach(categoryData => {
+            parades.forEach(parade => {
+                if (categoryData[parade]) {
+                    stats.totalBalls += (categoryData[parade].lightUpCount || 0) + (categoryData[parade].regularCount || 0);
+                }
+            });
+        });
+    }
+
+    // Calculate specials
+    stats.totalSpecials = Object.values(mardiGrasData.throws.specials.items)
+        .reduce((sum, item) => sum + (item.count || 0), 0);
+
+    return stats;
+}
+
+function renderStatistics() {
+    const stats = calculateStatistics();
+    
+    document.getElementById('totalBeadsCount').textContent = stats.totalBeadsCount.toLocaleString();
+    document.getElementById('totalBeadsWeight').textContent = formatWeight(stats.totalBeadsWeight);
+    document.getElementById('totalDoubloons').textContent = stats.totalDoubloons.toLocaleString();
+    document.getElementById('totalItems').textContent = stats.totalItems.toLocaleString();
+    document.getElementById('totalStuffedAnimals').textContent = stats.totalStuffedAnimals.toLocaleString();
+    document.getElementById('totalBalls').textContent = stats.totalBalls.toLocaleString();
+    document.getElementById('totalSpecials').textContent = stats.totalSpecials.toLocaleString();
+    
+    // Render winners
+    renderWinners();
+    renderBallsWinners();
+}
+
+function renderWinners() {
+    const beadData = getBeadData();
+    
+    // Find winner by count
+    let maxCount = 0;
+    let countWinner = '';
+    
+    Object.entries(beadData).forEach(([color, data]) => {
+        if (data.count > maxCount) {
+            maxCount = data.count;
+            countWinner = color;
+        }
+    });
+    
+    // Find winner by weight
+    let maxWeight = 0;
+    let weightWinner = '';
+    
+    Object.entries(beadData).forEach(([color, data]) => {
+        if (data.weight > maxWeight) {
+            maxWeight = data.weight;
+            weightWinner = color;
+        }
+    });
+    
+    // Display winners
+    const countWinnerEl = document.getElementById('winnerCount');
+    const countDetailsEl = document.getElementById('winnerCountDetails');
+    const weightWinnerEl = document.getElementById('winnerWeight');
+    const weightDetailsEl = document.getElementById('winnerWeightDetails');
+    
+    if (countWinnerEl && countWinner) {
+        countWinnerEl.textContent = countWinner.charAt(0).toUpperCase() + countWinner.slice(1);
+        countDetailsEl.textContent = `${maxCount.toLocaleString()} beads`;
+    }
+    
+    if (weightWinnerEl && weightWinner) {
+        weightWinnerEl.textContent = weightWinner.charAt(0).toUpperCase() + weightWinner.slice(1);
+        weightDetailsEl.textContent = formatWeight(maxWeight);
+    }
+}
+
+function renderItemsWinners() {
+    const winners = getItemsWinners();
+    
+    // Display most common item
+    const itemWinnerEl = document.getElementById('winnerItemMost');
+    const itemDetailsEl = document.getElementById('winnerItemMostDetails');
+    
+    if (itemWinnerEl && winners.mostCommonItem.name) {
+        const itemName = winners.mostCommonItem.name.charAt(0).toUpperCase() + winners.mostCommonItem.name.slice(1);
+        itemWinnerEl.textContent = itemName;
+        itemDetailsEl.textContent = `${winners.mostCommonItem.count.toLocaleString()} items`;
+    }
+    
+    // Display most common stuffed animal
+    const animalWinnerEl = document.getElementById('winnerStuffedAnimal');
+    const animalDetailsEl = document.getElementById('winnerStuffedAnimalDetails');
+    
+    if (animalWinnerEl && winners.mostCommonAnimal.name) {
+        animalWinnerEl.textContent = winners.mostCommonAnimal.name;
+        animalDetailsEl.textContent = `${winners.mostCommonAnimal.count.toLocaleString()} caught`;
+    }
+}
+
+function renderBallsWinners() {
+    const winners = getBallsWinners();
+    
+    // Display most common ball type
+    const ballTypeWinnerEl = document.getElementById('ballTypeWinnerCommon');
+    const ballTypeDetailsEl = document.getElementById('ballTypeWinnerCommonDetails');
+    
+    if (ballTypeWinnerEl && winners.mostCommonType.type) {
+        ballTypeWinnerEl.textContent = winners.mostCommonType.type;
+        ballTypeDetailsEl.textContent = `${winners.mostCommonType.count.toLocaleString()} balls`;
+    }
+}
+
+// ========================================
+// Data Aggregation for Charts
+// ========================================
+
+function getBeadData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    const colors = Object.keys(mardiGrasData.beads);
+
+    const data = {};
+    
+    colors.forEach(color => {
+        data[color] = { 
+            count: 0, 
+            weight: 0, 
+            medallion: { count: 0, weight: 0 }, 
+            regular: { count: 0, weight: 0 },
+            unaffiliatedSizes: { small: 0, medium: 0, large: 0, nonSphere: 0, other: 0 }
+        };
+        
+        parades.forEach(parade => {
+            if (mardiGrasData.beads[color] && mardiGrasData.beads[color][parade]) {
+                const paradeData = mardiGrasData.beads[color][parade];
+                
+                if (parade === 'unaffiliated') {
+                    // Handle unaffiliated's size-based structure
+                    if (paradeData.small) {
+                        data[color].regular.count += paradeData.small.count || 0;
+                        data[color].regular.weight += paradeData.small.weight || 0;
+                        data[color].unaffiliatedSizes.small += paradeData.small.count || 0;
+                    }
+                    if (paradeData.medium) {
+                        data[color].regular.count += paradeData.medium.count || 0;
+                        data[color].regular.weight += paradeData.medium.weight || 0;
+                        data[color].unaffiliatedSizes.medium += paradeData.medium.count || 0;
+                    }
+                    if (paradeData.large) {
+                        data[color].regular.count += paradeData.large.count || 0;
+                        data[color].regular.weight += paradeData.large.weight || 0;
+                        data[color].unaffiliatedSizes.large += paradeData.large.count || 0;
+                    }
+                    if (paradeData.nonSphere) {
+                        data[color].regular.count += paradeData.nonSphere.count || 0;
+                        data[color].regular.weight += paradeData.nonSphere.weight || 0;
+                        data[color].unaffiliatedSizes.nonSphere += paradeData.nonSphere.count || 0;
+                    }
+                    if (paradeData.other) {
+                        if (paradeData.other.medallion) {
+                            data[color].medallion.count += paradeData.other.medallion.count || 0;
+                            data[color].medallion.weight += paradeData.other.medallion.weight || 0;
+                        }
+                        if (paradeData.other.special) {
+                            data[color].regular.count += paradeData.other.special.count || 0;
+                            data[color].regular.weight += paradeData.other.special.weight || 0;
+                            data[color].unaffiliatedSizes.other += paradeData.other.special.count || 0;
+                        }
+                    }
+                } else {
+                    // Handle parade beads (medallion/regular structure)
+                    if (paradeData.medallion) {
+                        data[color].medallion.count += paradeData.medallion.count || 0;
+                        data[color].medallion.weight += paradeData.medallion.weight || 0;
+                    }
+                    if (paradeData.regular) {
+                        data[color].regular.count += paradeData.regular.count || 0;
+                        data[color].regular.weight += paradeData.regular.weight || 0;
+                    }
+                }
+            }
+        });
+        
+        // Calculate totals (medallion + regular)
+        data[color].count = data[color].medallion.count + data[color].regular.count;
+        data[color].weight = data[color].medallion.weight + data[color].regular.weight;
+    });
+
+    return data;
+}
+
+// New function to get bead data with type breakdown by parade
+function getBeadDataByType() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+
+    const medallionData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[parade]) {
+                if (parade === 'unaffiliated') {
+                    // For unaffiliated, only count other.medallion as medallion
+                    if (colorData[parade].other && colorData[parade].other.medallion) {
+                        total += colorData[parade].other.medallion.count || 0;
+                    }
+                } else {
+                    // For parades, count medallion beads
+                    if (colorData[parade].medallion) {
+                        total += colorData[parade].medallion.count || 0;
+                    }
+                }
+            }
+        });
+        return total;
+    });
+
+    const regularData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[parade]) {
+                if (parade === 'unaffiliated') {
+                    // For unaffiliated, aggregate all sizes + other.special into regular
+                    ['small', 'medium', 'large', 'nonSphere'].forEach(size => {
+                        if (colorData[parade][size]) {
+                            total += colorData[parade][size].count || 0;
+                        }
+                    });
+                    if (colorData[parade].other && colorData[parade].other.special) {
+                        total += colorData[parade].other.special.count || 0;
+                    }
+                } else {
+                    // For parades, count regular beads
+                    if (colorData[parade].regular) {
+                        total += colorData[parade].regular.count || 0;
+                    }
+                }
+            }
+        });
+        return total;
+    });
+
+    return { paradeLabels, medallionData, regularData };
+}
+
+// New function to get unaffiliated bead size breakdown
+function getUnaffiliatedSizeData() {
+    const sizeData = {
+        small: 0,
+        medium: 0,
+        large: 0,
+        nonSphere: 0,
+        medallion: 0,
+        special: 0
+    };
+    
+    Object.values(mardiGrasData.beads).forEach(colorData => {
+        if (colorData.unaffiliated) {
+            ['small', 'medium', 'large', 'nonSphere'].forEach(size => {
+                if (colorData.unaffiliated[size]) {
+                    sizeData[size] += colorData.unaffiliated[size].count || 0;
+                }
+            });
+            if (colorData.unaffiliated.other) {
+                if (colorData.unaffiliated.other.medallion) {
+                    sizeData.medallion += colorData.unaffiliated.other.medallion.count || 0;
+                }
+                if (colorData.unaffiliated.other.special) {
+                    sizeData.special += colorData.unaffiliated.other.special.count || 0;
+                }
+            }
+        }
+    });
+    
+    return sizeData;
+}
+
+// New function to get color breakdown by unaffiliated subtype
+function getUnaffiliatedColorBySubtype() {
+    const subtypes = ['small', 'medium', 'large', 'nonSphere', 'medallion', 'special'];
+    const data = {};
+    
+    // Initialize data structure: { subtype: { color: count } }
+    subtypes.forEach(subtype => {
+        data[subtype] = {};
+    });
+    
+    // Aggregate color counts for each subtype
+    Object.keys(mardiGrasData.beads).forEach(color => {
+        const colorData = mardiGrasData.beads[color];
+        if (colorData.unaffiliated) {
+            // Handle size-based subtypes
+            ['small', 'medium', 'large', 'nonSphere'].forEach(size => {
+                if (colorData.unaffiliated[size] && colorData.unaffiliated[size].count > 0) {
+                    data[size][color] = (data[size][color] || 0) + colorData.unaffiliated[size].count;
+                }
+            });
+            
+            // Handle other subtypes
+            if (colorData.unaffiliated.other) {
+                if (colorData.unaffiliated.other.medallion && colorData.unaffiliated.other.medallion.count > 0) {
+                    data['medallion'][color] = (data['medallion'][color] || 0) + colorData.unaffiliated.other.medallion.count;
+                }
+                if (colorData.unaffiliated.other.special && colorData.unaffiliated.other.special.count > 0) {
+                    data['special'][color] = (data['special'][color] || 0) + colorData.unaffiliated.other.special.count;
+                }
+            }
+        }
+    });
+    
+    return data;
+}
+
+// Get unaffiliated winners data
+function getUnaffiliatedWinners() {
+    const sizeData = getUnaffiliatedSizeData();
+    const colorBySubtype = getUnaffiliatedColorBySubtype();
+    
+    // Find most common shape
+    const shapes = ['small', 'medium', 'large', 'nonSphere', 'medallion', 'special'];
+    const shapeLabels = ['Small', 'Medium', 'Large', 'Non-Sphere', 'Medallion', 'Special'];
+    let maxShapeCount = 0;
+    let winnerShape = '';
+    let winnerShapeLabel = '';
+    
+    shapes.forEach((shape, index) => {
+        const count = sizeData[shape] || 0;
+        if (count > maxShapeCount) {
+            maxShapeCount = count;
+            winnerShape = shape;
+            winnerShapeLabel = shapeLabels[index];
+        }
+    });
+    
+    // Find most colorful shape (shape with most different colors)
+    let maxColorCount = 0;
+    let mostColorfulShape = '';
+    let mostColorfulShapeLabel = '';
+    
+    shapes.forEach((shape, index) => {
+        const colorCount = Object.keys(colorBySubtype[shape] || {}).length;
+        if (colorCount > maxColorCount) {
+            maxColorCount = colorCount;
+            mostColorfulShape = shape;
+            mostColorfulShapeLabel = shapeLabels[index];
+        }
+    });
+    
+    return {
+        mostCommon: { shape: winnerShapeLabel, count: maxShapeCount },
+        mostColorful: { shape: mostColorfulShapeLabel, colorCount: maxColorCount }
+    };
+}
+
+function getItemsData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+
+    const data = {};
+    
+    // Get regular items
+    Object.keys(mardiGrasData.throws.items).forEach(item => {
+        data[item] = 0;
+        parades.forEach(parade => {
+            if (mardiGrasData.throws.items[item][parade]) {
+                data[item] += mardiGrasData.throws.items[item][parade].count || 0;
+            }
+        });
+    });
+    
+    // Add stuffed animals as a single rolled-up category
+    data['stuffed animals'] = 0;
+    Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                data['stuffed animals'] += categoryData[parade].count || 0;
+            }
+        });
+    });
+
+    // Add balls as a single rolled-up category
+    data['balls'] = 0;
+    if (mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        Object.values(mardiGrasData.throws['Stuffed Animals']['Balls']).forEach(categoryData => {
+            parades.forEach(parade => {
+                if (categoryData[parade]) {
+                    data['balls'] += (categoryData[parade].lightUpCount || 0) + (categoryData[parade].regularCount || 0);
+                }
+            });
+        });
+    }
+
+    return data;
+}
+
+function getItemsWinners() {
+    const itemsData = getItemsData();
+    
+    // Find most common item
+    let maxItemCount = 0;
+    let mostCommonItem = '';
+    
+    Object.entries(itemsData).forEach(([item, count]) => {
+        if (count > maxItemCount) {
+            maxItemCount = count;
+            mostCommonItem = item;
+        }
+    });
+    
+    // Find most common stuffed animal category
+    const stuffedAnimalCategories = mardiGrasData.throws['Stuffed Animals'];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
+    let maxAnimalCount = 0;
+    let mostCommonAnimal = '';
+    
+    Object.entries(stuffedAnimalCategories).forEach(([category, categoryData]) => {
+        let totalCount = 0;
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                totalCount += categoryData[parade].count || 0;
+            }
+        });
+        
+        if (totalCount > maxAnimalCount) {
+            maxAnimalCount = totalCount;
+            mostCommonAnimal = category;
+        }
+    });
+    
+    return {
+        mostCommonItem: { name: mostCommonItem, count: maxItemCount },
+        mostCommonAnimal: { name: mostCommonAnimal, count: maxAnimalCount }
+    };
+}
+
+function getBallsWinners() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
+    if (!mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        return {
+            mostGenerousParade: { name: '-', count: 0 },
+            mostCommonType: { type: '-', count: 0 }
+        };
+    }
+    
+    const ballCategories = mardiGrasData.throws['Stuffed Animals']['Balls'];
+    
+    // Find most generous parade (most balls given)
+    const paradeMap = new Map();
+    mardiGrasData.parades.forEach(parade => {
+        paradeMap.set(parade.keyName, parade.shortName);
+    });
+    
+    const paradeTotals = {};
+    parades.forEach(parade => {
+        let total = 0;
+        Object.values(ballCategories).forEach(categoryData => {
+            if (categoryData[parade]) {
+                total += (categoryData[parade].lightUpCount || 0) + (categoryData[parade].regularCount || 0);
+            }
+        });
+        paradeTotals[parade] = total;
+    });
+    
+    let maxParadeCount = 0;
+    let mostGenerousParade = '';
+    Object.entries(paradeTotals).forEach(([parade, count]) => {
+        if (count > maxParadeCount) {
+            maxParadeCount = count;
+            mostGenerousParade = parade;
+        }
+    });
+    
+    const paradeName = mostGenerousParade === 'unaffiliated' ? 'Unaffiliated' : (paradeMap.get(mostGenerousParade) || mostGenerousParade);
+    
+    // Find most common ball type
+    let maxTypeCount = 0;
+    let mostCommonType = '';
+    
+    Object.entries(ballCategories).forEach(([category, categoryData]) => {
+        let total = 0;
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                total += (categoryData[parade].lightUpCount || 0) + (categoryData[parade].regularCount || 0);
+            }
+        });
+        
+        if (total > maxTypeCount) {
+            maxTypeCount = total;
+            mostCommonType = category;
+        }
+    });
+    
+    return {
+        mostGenerousParade: { name: paradeName, count: maxParadeCount },
+        mostCommonType: { type: mostCommonType, count: maxTypeCount }
+    };
+}
+
+function getItemsByParadeData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    // Get all item types
+    const itemTypes = Object.keys(mardiGrasData.throws.items);
+    
+    // Build dataset for each item type
+    const datasets = itemTypes.map(itemType => {
+        const data = parades.map(parade => {
+            return mardiGrasData.throws.items[itemType][parade]?.count || 0;
+        });
+        return {
+            label: itemType.charAt(0).toUpperCase() + itemType.slice(1),
+            data: data
+        };
+    });
+    
+    // Add stuffed animals as a rolled-up dataset
+    const stuffedAnimalsData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+            total += categoryData[parade]?.count || 0;
+        });
+        return total;
+    });
+    
+    datasets.push({
+        label: 'Stuffed Animals',
+        data: stuffedAnimalsData
+    });
+    
+    return {
+        labels: paradeLabels,
+        datasets: datasets,
+        itemTypes: [...itemTypes, 'stuffed animals']
+    };
+}
+
+function getStuffedAnimalsByParadeData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    // Get all stuffed animal categories
+    const categories = Object.keys(mardiGrasData.throws['Stuffed Animals']);
+    
+    // Build dataset for each category
+    const datasets = categories.map(category => {
+        const data = parades.map(parade => {
+            return mardiGrasData.throws['Stuffed Animals'][category][parade]?.count || 0;
+        });
+        return {
+            label: category,
+            data: data
+        };
+    });
+    
+    return {
+        labels: paradeLabels,
+        datasets: datasets,
+        categories: categories
+    };
+}
+
+function getBallsByTypeData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
+    if (!mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        return { labels: [], datasets: [] };
+    }
+    
+    const ballCategories = mardiGrasData.throws['Stuffed Animals']['Balls'];
+    
+    // Calculate totals for each ball type
+    const categoryTotals = {};
+    Object.entries(ballCategories).forEach(([category, categoryData]) => {
+        let regularTotal = 0;
+        let lightUpTotal = 0;
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                regularTotal += categoryData[parade].regularCount || 0;
+                lightUpTotal += categoryData[parade].lightUpCount || 0;
+            }
+        });
+        categoryTotals[category] = { regular: regularTotal, lightUp: lightUpTotal, total: regularTotal + lightUpTotal };
+    });
+    
+    // Sort by total count (largest to smallest)
+    const sortedEntries = Object.entries(categoryTotals).sort((a, b) => b[1].total - a[1].total);
+    const labels = sortedEntries.map(([category]) => category);
+    const regularData = sortedEntries.map(([, data]) => data.regular);
+    const lightUpData = sortedEntries.map(([, data]) => data.lightUp);
+    
+    return {
+        labels: labels,
+        datasets: [
+            { label: 'Regular', data: regularData },
+            { label: 'Light-up', data: lightUpData }
+        ]
+    };
+}
+
+function getBallsByParadeData() {
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    if (!mardiGrasData.throws['Stuffed Animals']['Balls']) {
+        return { labels: paradeLabels, datasets: [], categories: [] };
+    }
+    
+    // Get all ball categories
+    const categories = Object.keys(mardiGrasData.throws['Stuffed Animals']['Balls']);
+    
+    // Build dataset for each category
+    const datasets = categories.map(category => {
+        const data = parades.map(parade => {
+            const ballData = mardiGrasData.throws['Stuffed Animals']['Balls'][category][parade];
+            return (ballData?.lightUpCount || 0) + (ballData?.regularCount || 0);
+        });
+        return {
+            label: category,
+            data: data
+        };
+    });
+    
+    return {
+        labels: paradeLabels,
+        datasets: datasets,
+        categories: categories
+    };
+}
+
+function getLightUpVsRegularBeadsByParadeData() {
+    const parades = mardiGrasData.parades.map(p => p.keyName); // Exclude unaffiliated
+    const paradeLabels = parades.map(p => {
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    // Calculate light-up bead totals for each parade
+    const lightUpData = parades.map(parade => {
+        let total = 0;
+        const lightupColorData = mardiGrasData.beads.lightup;
+        if (lightupColorData && lightupColorData[parade]) {
+            // Count medallion and regular for light-up beads
+            total += (lightupColorData[parade].medallion?.count || 0);
+            total += (lightupColorData[parade].regular?.count || 0);
+        }
+        return total;
+    });
+    
+    // Calculate regular (non-light-up) bead totals for each parade
+    const regularData = parades.map(parade => {
+        let total = 0;
+        Object.entries(mardiGrasData.beads).forEach(([color, colorData]) => {
+            // Skip the lightup color
+            if (color === 'lightup') return;
+            
+            if (colorData[parade]) {
+                // Count medallion and regular for all non-light-up colors
+                total += (colorData[parade].medallion?.count || 0);
+                total += (colorData[parade].regular?.count || 0);
+            }
+        });
+        return total;
+    });
+    
+    return { paradeLabels, lightUpData, regularData };
+}
+
+function getDoubloonsData() {
+    const data = {};
+    
+    // Helper function to convert camelCase to readable format
+    const camelToReadable = (str) => {
+        return str
+            // Insert space before capital letters
+            .replace(/([A-Z])/g, ' $1')
+            // Capitalize first letter
+            .replace(/^./, (match) => match.toUpperCase())
+            .trim();
+    };
+    
+    // Get all doubloon keys from data
+    const allDoubloonKeys = Object.keys(mardiGrasData.doubloons);
+    
+    // Build map of parade keyNames to shortNames
+    const paradeMap = new Map();
+    mardiGrasData.parades.forEach(parade => {
+        paradeMap.set(parade.keyName, parade.shortName);
+    });
+    
+    // Process each doubloon category
+    allDoubloonKeys.forEach(key => {
+        const count = mardiGrasData.doubloons[key]?.count || 0;
+        
+        // Use parade shortName if it's a parade, otherwise convert camelCase
+        const label = paradeMap.has(key) ? paradeMap.get(key) : camelToReadable(key);
+        data[label] = count;
+    });
+    
+    return data;
+}
+
+function getParadeComparisonData() {
+    const itemsData = {};
+    const weightData = {};
+
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+
+        // Calculate total items
+        let totalItems = 0;
+        Object.values(mardiGrasData.throws.items).forEach(itemData => {
+            totalItems += itemData[paradeKey]?.count || 0;
+        });
+        
+        // Add stuffed animals
+        Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+            totalItems += categoryData[paradeKey]?.count || 0;
+        });
+        
+        // Add balls
+        if (mardiGrasData.throws['Stuffed Animals']['Balls']) {
+            Object.values(mardiGrasData.throws['Stuffed Animals']['Balls']).forEach(categoryData => {
+                totalItems += (categoryData[paradeKey]?.lightUpCount || 0) + (categoryData[paradeKey]?.regularCount || 0);
+            });
+        }
+        
+        itemsData[paradeShortName] = totalItems;
+
+        // Calculate total bead weight (medallion + regular)
+        let totalWeight = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey]) {
+                totalWeight += (colorData[paradeKey].medallion?.weight || 0) + (colorData[paradeKey].regular?.weight || 0);
+            }
+        });
+        weightData[paradeShortName] = totalWeight;
+    });
+
+    return { itemsData, weightData };
+}
+
+// New functions for Beads by Parade analysis
+function getBeadCountByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        let totalCount = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey]) {
+                totalCount += (colorData[paradeKey].medallion?.count || 0) + (colorData[paradeKey].regular?.count || 0);
+            }
+        });
+        data[paradeShortName] = totalCount;
+    });
+    
+    return data;
+}
+
+function getBeadWeightByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        let totalWeight = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey]) {
+                totalWeight += (colorData[paradeKey].medallion?.weight || 0) + (colorData[paradeKey].regular?.weight || 0);
+            }
+        });
+        data[paradeShortName] = totalWeight;
+    });
+    
+    return data;
+}
+
+function getColorDistributionByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        data[paradeShortName] = {};
+        
+        Object.keys(mardiGrasData.beads).forEach(color => {
+            const colorData = mardiGrasData.beads[color];
+            if (colorData[paradeKey]) {
+                const count = (colorData[paradeKey].medallion?.count || 0) + (colorData[paradeKey].regular?.count || 0);
+                if (count > 0) {
+                    data[paradeShortName][color] = count;
+                }
+            }
+        });
+    });
+    
+    return data;
+}
+
+function getMedallionCountByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        let medallionCount = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey] && colorData[paradeKey].medallion) {
+                medallionCount += colorData[paradeKey].medallion.count || 0;
+            }
+        });
+        data[paradeShortName] = medallionCount;
+    });
+    
+    return data;
+}
+
+function getColorVarietyByParade() {
+    const data = {};
+    
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        
+        let colorCount = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[paradeKey]) {
+                const count = (colorData[paradeKey].medallion?.count || 0) + (colorData[paradeKey].regular?.count || 0);
+                if (count > 0) {
+                    colorCount++;
+                }
+            }
+        });
+        data[paradeShortName] = colorCount;
+    });
+    
+    return data;
+}
+
+function getParadeWinners() {
+    const countData = getBeadCountByParade();
+    const weightData = getBeadWeightByParade();
+    const colorVarietyData = getColorVarietyByParade();
+    const medallionData = getMedallionCountByParade();
+    
+    // Get doubloons data (only for actual parades, not all categories)
+    const doubloonsData = {};
+    mardiGrasData.parades.forEach(parade => {
+        doubloonsData[parade.shortName] = mardiGrasData.doubloons[parade.keyName]?.count || 0;
+    });
+    
+    // Get stuffed animals data by parade
+    const stuffedAnimalsData = {};
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        let total = 0;
+        Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+            total += categoryData[paradeKey]?.count || 0;
+        });
+        stuffedAnimalsData[paradeShortName] = total;
+    });
+    
+    // Get total throws (items + stuffed animals) by parade
+    const throwsData = {};
+    mardiGrasData.parades.forEach(parade => {
+        const paradeShortName = parade.shortName;
+        const paradeKey = parade.keyName;
+        let totalItems = 0;
+        
+        // Add regular items
+        Object.values(mardiGrasData.throws.items).forEach(itemData => {
+            totalItems += itemData[paradeKey]?.count || 0;
+        });
+        
+        // Add stuffed animals
+        Object.values(mardiGrasData.throws['Stuffed Animals']).forEach(categoryData => {
+            totalItems += categoryData[paradeKey]?.count || 0;
+        });
+        
+        throwsData[paradeShortName] = totalItems;
+    });
+    
+    // Find winners
+    let mostGenerous = { name: '', count: 0 };
+    let heaviest = { name: '', weight: 0 };
+    let mostColorful = { name: '', colorCount: 0 };
+    let medallionKing = { name: '', count: 0 };
+    let mostDoubloons = { name: '', count: 0 };
+    let mostStuffedAnimals = { name: '', count: 0 };
+    let mostThrows = { name: '', count: 0 };
+    
+    Object.entries(countData).forEach(([parade, count]) => {
+        if (count > mostGenerous.count) {
+            mostGenerous = { name: parade, count };
+        }
+    });
+    
+    Object.entries(weightData).forEach(([parade, weight]) => {
+        if (weight > heaviest.weight) {
+            heaviest = { name: parade, weight };
+        }
+    });
+    
+    Object.entries(colorVarietyData).forEach(([parade, colorCount]) => {
+        if (colorCount > mostColorful.colorCount) {
+            mostColorful = { name: parade, colorCount };
+        }
+    });
+    
+    Object.entries(medallionData).forEach(([parade, count]) => {
+        if (count > medallionKing.count) {
+            medallionKing = { name: parade, count };
+        }
+    });
+    
+    Object.entries(doubloonsData).forEach(([parade, count]) => {
+        if (count > mostDoubloons.count) {
+            mostDoubloons = { name: parade, count };
+        }
+    });
+    
+    Object.entries(stuffedAnimalsData).forEach(([parade, count]) => {
+        if (count > mostStuffedAnimals.count) {
+            mostStuffedAnimals = { name: parade, count };
+        }
+    });
+    
+    Object.entries(throwsData).forEach(([parade, count]) => {
+        if (count > mostThrows.count) {
+            mostThrows = { name: parade, count };
+        }
+    });
+    
+    return { mostGenerous, heaviest, mostColorful, medallionKing, mostDoubloons, mostStuffedAnimals, mostThrows };
+}
+
+// ========================================
+// Chart Rendering
+// ========================================
+
+function renderAllVisualizations() {
+    // Beads by Color Analysis
+    updateBeadCharts();
+    
+    // Beads by Parade Analysis  
+    renderParadeBeadCharts();
+    
+    // Unaffiliated breakdown
+    renderUnaffiliatedSizeChart();
+    renderUnaffiliatedColorBySubtypeChart();
+    renderUnaffiliatedWinners();
+    
+    // Other sections
+    renderItemsChart();
+    renderItemsWinners();
+    renderAllItemsChart();
+    renderStuffedAnimalsChart();
+    renderItemsByParadeChart();
+    renderStuffedAnimalsByParadeChart();
+    renderBallsByTypeChart();
+    renderBallsByParadeChart();
+    renderSpecialsChart();
+    
+    // Tables
+    renderTables();
+}
+
+function renderParadeBeadCharts() {
+    // Charts moved from other sections
+    renderBeadTypesByParadeChart();
+    renderLightUpVsRegularByParadeChart();
+    renderMedallionVsRegularByParadeChart();
+    
+    // New parade-focused charts
+    renderBeadCountByParadeChart();
+    renderBeadWeightByParadeChart();
+    renderColorDistributionByParadeChart();
+    renderDoubloonsChart();
+    
+    // Parade winners
+    renderParadeWinners();
+}
+
+function updateBeadCharts() {
+    const beadData = getBeadData();
+    
+    renderBeadCountChart(beadData);
+    renderBeadWeightChart(beadData);
+    renderBeadPercentageChart(beadData);
+    renderMedallionVsRegularByColorChart(); // Moved to color section
+}
+
+function renderBeadCountChart(beadData) {
+    const ctx = document.getElementById('beadCountChart');
+    if (!ctx) return;
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].count - a[1].count);
+    const labels = sortedEntries.map(([color]) => color);
+    const data = sortedEntries.map(([, value]) => value.count);
+    const colors = labels.map(color => BEAD_COLORS[color] || '#999');
+
+    if (charts.beadCount) charts.beadCount.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 10,
+                top: 30,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `Count: ${context.parsed.y}`
+                }
+            }
+        },
+        scales: {
+            y: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5
+                }
+            },
+            x: {
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.beadCount = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                label: 'Count',
+                data: data,
+                maxBarThickness: isMobileView() ? 40 : 50,
+                backgroundColor: colors,
+                borderColor: colors.map(c => getBorderColor(c)),
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderBeadWeightChart(beadData) {
+    const ctx = document.getElementById('beadWeightChart');
+    if (!ctx) return;
+    
+    // Sort by weight (largest to smallest)
+    const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].weight - a[1].weight);
+    const labels = sortedEntries.map(([color]) => color);
+    const dataInGrams = sortedEntries.map(([, value]) => value.weight);
+    
+    // Convert data based on weight unit
+    const data = weightUnit === 'pounds' 
+        ? dataInGrams.map(g => gramsToLbs(g))
+        : dataInGrams;
+    
+    const colors = labels.map(color => BEAD_COLORS[color] || '#999');
+    
+    // Determine unit label and formatter
+    const unitLabel = weightUnit === 'pounds' ? 'lbs' : 'g';
+    const unitText = weightUnit === 'pounds' ? 'Weight (pounds)' : 'Weight (grams)';
+    const formatter = weightUnit === 'pounds' 
+        ? (value) => value.toFixed(2) + ' lbs'
+        : (value) => Math.round(value) + 'g';
+
+    if (charts.beadWeight) charts.beadWeight.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                left: 10,
+                right: 10,
+                top: 30,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: formatter
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `Weight: ${formatter(context.parsed.y)}`
+                }
+            }
+        },
+        scales: {
+            y: { 
+                beginAtZero: true, 
+                title: { display: true, text: unitText },
+                ticks: {
+                    padding: 5,
+                    callback: function(value) {
+                        return weightUnit === 'pounds' ? value.toFixed(2) : Math.round(value);
+                    }
+                }
+            },
+            x: {
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.beadWeight = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                label: `Weight (${unitLabel})`,
+                data: data,
+                maxBarThickness: isMobileView() ? 40 : 50,
+                backgroundColor: colors,
+                borderColor: colors.map(c => getBorderColor(c)),
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderBeadPercentageChart(beadData) {
+    const ctx = document.getElementById('beadPercentageChart');
+    if (!ctx) return;
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(beadData).sort((a, b) => b[1].count - a[1].count);
+    const labels = sortedEntries.map(([color]) => color);
+    const counts = sortedEntries.map(([, value]) => value.count);
+    const total = counts.reduce((sum, val) => sum + val, 0);
+    const percentages = counts.map(count => ((count / total) * 100).toFixed(1));
+    const colors = labels.map(color => BEAD_COLORS[color] || '#999');
+
+    if (charts.beadPercentage) charts.beadPercentage.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        layout: {
+            padding: {
+                left: 5,
+                right: 5,
+                top: 5,
+                bottom: 5
+            }
+        },
+        plugins: {
+            legend: { 
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: {
+                    padding: isMobileView() ? 4 : 8,
+                    boxWidth: isMobileView() ? 10 : 12,
+                    font: {
+                        size: isMobileView() ? 9 : 11
+                    }
+                }
+            },
+            datalabels: {
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: isMobileView() ? 9 : 11
+                },
+                formatter: (value, context) => {
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return percentage > 3 ? percentage + '%' : ''; // Only show if > 3%
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.beadPercentage = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                data: counts,
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderBeadTypesByParadeChart() {
+    const ctx = document.getElementById('beadTypesByParadeChart');
+    if (!ctx) return;
+    
+    // Get parades to display
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
+    const paradeLabels = parades.map(p => {
+        if (p === 'unaffiliated') return 'Unaffiliated';
+        const parade = mardiGrasData.parades.find(pr => pr.keyName === p);
+        return parade ? parade.shortName : p;
+    });
+    
+    // Calculate medallion and regular bead totals for each parade
+    const medallionData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[parade] && colorData[parade].medallion) {
+                total += colorData[parade].medallion.count || 0;
+            }
+        });
+        return total;
+    });
+    
+    const regularData = parades.map(parade => {
+        let total = 0;
+        Object.values(mardiGrasData.beads).forEach(colorData => {
+            if (colorData[parade] && colorData[parade].regular) {
+                total += colorData[parade].regular.count || 0;
+            }
+        });
+        return total;
+    });
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(paradeLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    if (charts.beadTypesByParade) charts.beadTypesByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                display: true,
+                position: 'top',
+                labels: {
+                    padding: 15,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                color: '#fff',
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : ''
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 10,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.beadTypesByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: paradeLabels,
+            datasets: [
+                {
+                    label: 'Regular Beads',
+                    data: regularData,
+                    backgroundColor: CHART_COLORS.purple,
+                    borderColor: CHART_COLORS.purple,
+                    borderWidth: 1
+                },
+                {
+                    label: 'Medallion Beads',
+                    data: medallionData,
+                    backgroundColor: CHART_COLORS.gold,
+                    borderColor: CHART_COLORS.gold,
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderItemsChart() {
+    const ctx = document.getElementById('itemsChart');
+    if (!ctx) return;
+    
+    const itemsData = getItemsData();
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(itemsData).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(([item]) => item);
+    const data = sortedEntries.map(([, count]) => count);
+    const total = data.reduce((sum, val) => sum + val, 0);
+    
+    // Generate evenly-spaced distinct colors for all items
+    const colors = generateDistinctColors(labels.length);
+
+    if (charts.items) charts.items.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        layout: {
+            padding: {
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20
+            }
+        },
+        plugins: {
+            legend: { 
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                color: (context) => {
+                    // Get the background color of the current segment
+                    const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value, context) => {
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return percentage > 3 ? percentage + '%' : ''; // Only show if > 3%
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.items = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderStuffedAnimalsChart() {
+    const ctx = document.getElementById('stuffedAnimalsChart');
+    if (!ctx) return;
+    
+    const stuffedAnimalCategories = mardiGrasData.throws['Stuffed Animals'];
+    const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
+    
+    // Calculate totals for each category
+    const categoryTotals = {};
+    Object.entries(stuffedAnimalCategories).forEach(([category, categoryData]) => {
+        let total = 0;
+        parades.forEach(parade => {
+            if (categoryData[parade]) {
+                total += categoryData[parade].count || 0;
+            }
+        });
+        categoryTotals[category] = total;
+    });
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(([category]) => category);
+    const data = sortedEntries.map(([, count]) => count);
+    const colors = generateColorPattern(labels.length);
+
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+
+    if (charts.stuffedAnimals) charts.stuffedAnimals.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.stuffedAnimals = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Count',
+                data: data,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderBallsByTypeChart() {
+    const ctx = document.getElementById('ballsByTypeChart');
+    if (!ctx) return;
+    
+    const ballsData = getBallsByTypeData();
+    const { labels, datasets } = ballsData;
+    
+    if (labels.length === 0) return;
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+
+    if (charts.ballsByType) charts.ballsByType.destroy();
+    
+    // Colors for Regular and Light-up
+    const regularColor = CHART_COLORS.purple;
+    const lightUpColor = CHART_COLORS.gold;
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                display: function(context) {
+                    // Show total on the rightmost segment (light-up)
+                    return context.datasetIndex === 1;
+                },
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: function(value, context) {
+                    // Calculate and display total
+                    const datasetIndex = context.dataIndex;
+                    const regularValue = context.chart.data.datasets[0].data[datasetIndex];
+                    const lightUpValue = context.chart.data.datasets[1].data[datasetIndex];
+                    return regularValue + lightUpValue;
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 5,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.ballsByType = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Regular',
+                    data: datasets[0].data,
+                    backgroundColor: regularColor,
+                    borderColor: regularColor,
+                    borderWidth: 1
+                },
+                {
+                    label: 'Light-up',
+                    data: datasets[1].data,
+                    backgroundColor: lightUpColor,
+                    borderColor: lightUpColor,
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderAllItemsChart() {
+    const ctx = document.getElementById('allItemsChart');
+    if (!ctx) return;
+    
+    const itemsData = getItemsData();
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(itemsData).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(([item]) => item);
+    const data = sortedEntries.map(([, count]) => count);
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    // Generate distinct colors for all items
+    const colors = generateDistinctColors(labels.length);
+
+    if (charts.allItems) charts.allItems.destroy();
+    
+    const labelFontSize = isMobileView() ? 11 : 12;
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: labelFontSize
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 5,
+                    font: {
+                        size: labelFontSize
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.allItems = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                label: 'Count',
+                data: data,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2,
+                barThickness: labelFontSize // Match bar width to label font size
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderItemsByParadeChart() {
+    const ctx = document.getElementById('itemsByParadeChart');
+    if (!ctx) return;
+    
+    const itemsByParadeData = getItemsByParadeData();
+    const { labels, datasets, itemTypes } = itemsByParadeData;
+    
+    // Calculate total items for each parade and sort (largest to smallest)
+    const paradeWithTotals = labels.map((label, index) => {
+        const total = datasets.reduce((sum, dataset) => sum + dataset.data[index], 0);
+        return { label, index, total };
+    });
+    
+    paradeWithTotals.sort((a, b) => b.total - a.total);
+    
+    const sortedLabels = paradeWithTotals.map(item => item.label);
+    const sortedIndices = paradeWithTotals.map(item => item.index);
+    
+    // Reorder datasets according to sorted parade order
+    const sortedDatasets = datasets.map(dataset => ({
+        ...dataset,
+        data: sortedIndices.map(idx => dataset.data[idx])
+    }));
+    
+    // Initialize filters if not yet initialized
+    if (filters.itemsByParade.size === 0) {
+        initializeParadeFilters('itemsByParade', sortedLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.itemsByParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.itemsByParade) charts.itemsByParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredDatasets = sortedDatasets.map(dataset => ({
+        ...dataset,
+        data: filteredIndices.map(item => dataset.data[item.index])
+    }));
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    // Generate distinct colors for each item type
+    const itemColors = generateDistinctColors(itemTypes.length);
+    
+    // Map colors to datasets
+    const coloredDatasets = filteredDatasets.map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: itemColors[index],
+        borderColor: itemColors[index],
+        borderWidth: 1
+    }));
+    
+    if (charts.itemsByParade) charts.itemsByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                display: false // Don't show individual values on stacked segments
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.x;
+                        return value > 0 ? `${label}: ${value}` : '';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Item Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 5,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.itemsByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: coloredDatasets
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderStuffedAnimalsByParadeChart() {
+    const ctx = document.getElementById('stuffedAnimalsByParadeChart');
+    if (!ctx) return;
+    
+    const stuffedAnimalsByParadeData = getStuffedAnimalsByParadeData();
+    const { labels, datasets, categories } = stuffedAnimalsByParadeData;
+    
+    // Calculate total stuffed animals for each parade and sort (largest to smallest)
+    const paradeWithTotals = labels.map((label, index) => {
+        const total = datasets.reduce((sum, dataset) => sum + dataset.data[index], 0);
+        return { label, index, total };
+    });
+    
+    paradeWithTotals.sort((a, b) => b.total - a.total);
+    
+    const sortedLabels = paradeWithTotals.map(item => item.label);
+    const sortedIndices = paradeWithTotals.map(item => item.index);
+    
+    // Reorder datasets according to sorted parade order
+    const sortedDatasets = datasets.map(dataset => ({
+        ...dataset,
+        data: sortedIndices.map(idx => dataset.data[idx])
+    }));
+    
+    // Initialize filters if not yet initialized
+    if (filters.stuffedAnimalsByParade.size === 0) {
+        initializeParadeFilters('stuffedAnimalsByParade', sortedLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.stuffedAnimalsByParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.stuffedAnimalsByParade) charts.stuffedAnimalsByParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredDatasets = sortedDatasets.map(dataset => ({
+        ...dataset,
+        data: filteredIndices.map(item => dataset.data[item.index])
+    }));
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    // Generate distinct colors for each category
+    const categoryColors = generateDistinctColors(categories.length);
+    
+    // Map colors to datasets
+    const coloredDatasets = filteredDatasets.map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: categoryColors[index],
+        borderColor: categoryColors[index],
+        borderWidth: 1
+    }));
+    
+    if (charts.stuffedAnimalsByParade) charts.stuffedAnimalsByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                display: false // Don't show individual values on stacked segments
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.x;
+                        return value > 0 ? `${label}: ${value}` : '';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Stuffed Animal Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 5,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.stuffedAnimalsByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: coloredDatasets
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderBallsByParadeChart() {
+    const ctx = document.getElementById('ballsByParadeChart');
+    if (!ctx) return;
+    
+    const ballsByParadeData = getBallsByParadeData();
+    const { labels, datasets, categories } = ballsByParadeData;
+    
+    if (categories.length === 0) return;
+    
+    // Calculate total balls for each parade and sort (largest to smallest)
+    const paradeWithTotals = labels.map((label, index) => {
+        const total = datasets.reduce((sum, dataset) => sum + dataset.data[index], 0);
+        return { label, index, total };
+    });
+    
+    paradeWithTotals.sort((a, b) => b.total - a.total);
+    
+    const sortedLabels = paradeWithTotals.map(item => item.label);
+    const sortedIndices = paradeWithTotals.map(item => item.index);
+    
+    // Reorder datasets according to sorted parade order
+    const sortedDatasets = datasets.map(dataset => ({
+        ...dataset,
+        data: sortedIndices.map(idx => dataset.data[idx])
+    }));
+    
+    // Initialize filters if not yet initialized
+    if (filters.ballsByParade.size === 0) {
+        initializeParadeFilters('ballsByParade', sortedLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.ballsByParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.ballsByParade) charts.ballsByParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredDatasets = sortedDatasets.map(dataset => ({
+        ...dataset,
+        data: filteredIndices.map(item => dataset.data[item.index])
+    }));
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    // Generate distinct colors for each category
+    const categoryColors = generateDistinctColors(categories.length);
+    
+    // Map colors to datasets
+    const coloredDatasets = filteredDatasets.map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: categoryColors[index],
+        borderColor: categoryColors[index],
+        borderWidth: 1
+    }));
+    
+    if (charts.ballsByParade) charts.ballsByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', // Horizontal bars
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                display: false // Don't show individual values on stacked segments
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.x;
+                        return value > 0 ? `${label}: ${value}` : '';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Ball Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 5,
+                    precision: 0
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 5
+                }
+            }
+        }
+    };
+    
+    charts.ballsByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: coloredDatasets
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderSpecialsChart() {
+    const ctx = document.getElementById('specialsChart');
+    if (!ctx) return;
+    
+    const specialsData = mardiGrasData.throws.specials.items;
+    const paradeNames = mardiGrasData.throws.specials.description.parades;
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(specialsData).sort((a, b) => b[1].count - a[1].count);
+    const labels = sortedEntries.map(([paradeKey]) => {
+        // Get the parade's special item name from description.parades
+        return paradeNames[paradeKey] || paradeKey;
+    });
+    const data = sortedEntries.map(([, value]) => value.count);
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    // Generate color pattern
+    const colors = labels.map((_, index) => {
+        const colorKeys = Object.keys(CHART_COLORS);
+        return CHART_COLORS[colorKeys[index % colorKeys.length]];
+    });
+
+    if (charts.specials) charts.specials.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false
+                }
+            }
+        }
+    };
+    
+    charts.specials = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                label: 'Count',
+                data: data,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderDoubloonsChart() {
+    const ctx = document.getElementById('doubloonsChart');
+    if (!ctx) return;
+    
+    const doubloonsData = getDoubloonsData();
+    
+    // Sort by count (largest to smallest)
+    const sortedEntries = Object.entries(doubloonsData).sort((a, b) => b[1] - a[1]);
+    const labels = sortedEntries.map(([label]) => label);
+    const data = sortedEntries.map(([, count]) => count);
+    const isHorizontal = true; // Always horizontal since we show all parades
+    const colors = generateColorPattern(labels.length);
+
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+
+    if (charts.doubloons) charts.doubloons.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: isHorizontal ? 'y' : 'x',
+        layout: {
+            padding: {
+                left: 10,
+                right: isHorizontal ? 50 : 10,
+                top: isHorizontal ? 10 : 30,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: isHorizontal ? 'right' : 'top',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            [isHorizontal ? 'x' : 'y']: {
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            [isHorizontal ? 'y' : 'x']: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false
+                }
+            }
+        }
+    };
+    
+    charts.doubloons = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Doubloons',
+                data: data,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderMedallionVsRegularCharts() {
+    // Render medallion vs regular by color
+    renderMedallionVsRegularByColorChart();
+    
+    // Render medallion vs regular by parade  
+    renderMedallionVsRegularByParadeChart();
+    
+    // Render unaffiliated size breakdown
+    renderUnaffiliatedSizeChart();
+}
+
+function renderMedallionVsRegularByColorChart() {
+    const ctx = document.getElementById('medallionVsRegularColorChart');
+    if (!ctx) return; // Chart element doesn't exist yet
+    
+    const beadData = getBeadData();
+    
+    // Sort by total count (medallion + regular, largest to smallest)
+    const sortedEntries = Object.entries(beadData)
+        .filter(([color, data]) => data.count > 0)
+        .sort((a, b) => b[1].count - a[1].count);
+    
+    const labels = sortedEntries.map(([color]) => color);
+    const medallionCounts = sortedEntries.map(([, data]) => data.medallion.count);
+    const regularCounts = sortedEntries.map(([, data]) => data.regular.count);
+    const colors = labels.map(color => BEAD_COLORS[color] || '#999');
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    if (charts.medallionVsRegularColor) charts.medallionVsRegularColor.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                display: true,
+                position: 'top',
+                labels: {
+                    padding: 15
+                }
+            },
+            datalabels: {
+                color: (context) => {
+                    // For stacked bars, get the color from the dataset's backgroundColor array
+                    const bgColor = Array.isArray(context.dataset.backgroundColor)
+                        ? context.dataset.backgroundColor[context.dataIndex]
+                        : context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 11
+                },
+                formatter: (value) => value > 0 ? value : ''
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5
+                }
+            },
+            y: { 
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false
+                }
+            }
+        }
+    };
+    
+    charts.medallionVsRegularColor = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [
+                {
+                    label: 'Regular',
+                    data: regularCounts,
+                    backgroundColor: colors.map(c => c),
+                    borderColor: colors.map(c => getBorderColor(c)),
+                    borderWidth: 2
+                },
+                {
+                    label: 'Medallion',
+                    data: medallionCounts,
+                    backgroundColor: colors.map(c => c + 'CC'),
+                    borderColor: colors.map(c => getBorderColor(c)),
+                    borderWidth: 2,
+                    borderDash: [5, 5]
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderLightUpVsRegularByParadeChart() {
+    const ctx = document.getElementById('lightUpVsRegularParadeChart');
+    if (!ctx) return;
+    
+    const { paradeLabels, lightUpData, regularData } = getLightUpVsRegularBeadsByParadeData();
+    
+    // Sort by total count (light-up + regular, largest to smallest)
+    const combined = paradeLabels.map((label, index) => ({
+        label,
+        lightUp: lightUpData[index],
+        regular: regularData[index],
+        total: lightUpData[index] + regularData[index]
+    }));
+    
+    const sorted = combined.sort((a, b) => b.total - a.total);
+    const sortedLabels = sorted.map(item => item.label);
+    const sortedLightUpData = sorted.map(item => item.lightUp);
+    const sortedRegularData = sorted.map(item => item.regular);
+    
+    // Initialize filters if not yet initialized
+    if (filters.lightUpVsRegularParade.size === 0) {
+        initializeParadeFilters('lightUpVsRegularParade', sortedLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.lightUpVsRegularParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.lightUpVsRegularParade) charts.lightUpVsRegularParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredLightUpData = filteredIndices.map(item => sortedLightUpData[item.index]);
+    const filteredRegularData = filteredIndices.map(item => sortedRegularData[item.index]);
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    if (charts.lightUpVsRegularParade) charts.lightUpVsRegularParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                display: true,
+                position: 'top',
+                labels: {
+                    padding: 15
+                }
+            },
+            datalabels: {
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : '',
+                anchor: 'center',
+                align: 'center'
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 10
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.lightUpVsRegularParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: [
+                {
+                    label: 'Regular Beads',
+                    data: filteredRegularData,
+                    backgroundColor: CHART_COLORS.purple,
+                    borderColor: CHART_COLORS.purple,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Light-up Beads',
+                    data: filteredLightUpData,
+                    backgroundColor: CHART_COLORS.gold,
+                    borderColor: CHART_COLORS.gold,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels, minBarLengthPlugin]
+    });
+}
+
+function renderMedallionVsRegularByParadeChart() {
+    const ctx = document.getElementById('medallionVsRegularParadeChart');
+    if (!ctx) return; // Chart element doesn't exist yet
+    
+    const { paradeLabels, medallionData, regularData } = getBeadDataByType();
+    
+    // Sort by total count (medallion + regular, largest to smallest)
+    const combined = paradeLabels.map((label, index) => ({
+        label,
+        medallion: medallionData[index],
+        regular: regularData[index],
+        total: medallionData[index] + regularData[index]
+    }));
+    
+    const sorted = combined.sort((a, b) => b.total - a.total);
+    const sortedLabels = sorted.map(item => item.label);
+    const sortedMedallionData = sorted.map(item => item.medallion);
+    const sortedRegularData = sorted.map(item => item.regular);
+    
+    // Initialize filters if not yet initialized
+    if (filters.medallionVsRegularParade.size === 0) {
+        initializeParadeFilters('medallionVsRegularParade', sortedLabels);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedLabels
+        .map((label, index) => ({ label, index }))
+        .filter(item => filters.medallionVsRegularParade.has(item.label));
+    
+    // If no parades selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.medallionVsRegularParade) charts.medallionVsRegularParade.destroy();
+        return;
+    }
+    
+    const filteredLabels = filteredIndices.map(item => item.label);
+    const filteredMedallionData = filteredIndices.map(item => sortedMedallionData[item.index]);
+    const filteredRegularData = filteredIndices.map(item => sortedRegularData[item.index]);
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    if (charts.medallionVsRegularParade) charts.medallionVsRegularParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { 
+                display: true,
+                position: 'top',
+                labels: {
+                    padding: 15
+                }
+            },
+            datalabels: {
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : '',
+                anchor: 'center',
+                align: 'center'
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 20
+                }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.medallionVsRegularParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: [
+                {
+                    label: 'Regular Beads',
+                    data: filteredRegularData,
+                    backgroundColor: CHART_COLORS.purple,
+                    borderColor: CHART_COLORS.purple,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Medallion Beads',
+                    data: filteredMedallionData,
+                    backgroundColor: CHART_COLORS.gold,
+                    borderColor: CHART_COLORS.gold,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels, minBarLengthPlugin]
+    });
+}
+
+function renderUnaffiliatedSizeChart() {
+    const ctx = document.getElementById('unaffiliatedSizeChart');
+    if (!ctx) return;
+    
+    const sizeData = getUnaffiliatedSizeData();
+    
+    // Create array of [label, count] pairs and sort by count (largest to smallest)
+    const dataEntries = [
+        ['Small', sizeData.small],
+        ['Medium', sizeData.medium],
+        ['Large', sizeData.large],
+        ['Non-Sphere', sizeData.nonSphere],
+        ['Medallion', sizeData.medallion],
+        ['Special', sizeData.special]
+    ];
+    
+    // Filter out zero values and sort
+    const filteredAndSorted = dataEntries
+        .filter(([label, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1]);
+    
+    const filteredLabels = filteredAndSorted.map(([label]) => label);
+    const filteredData = filteredAndSorted.map(([, count]) => count);
+    
+    if (filteredData.length === 0) {
+        // No unaffiliated beads, hide the chart
+        if (charts.unaffiliatedSize) charts.unaffiliatedSize.destroy();
+        return;
+    }
+    
+    // Generate evenly-spaced distinct colors for all shapes
+    const colors = generateDistinctColors(filteredLabels.length);
+    
+    if (charts.unaffiliatedSize) charts.unaffiliatedSize.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        layout: {
+            padding: {
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20
+            }
+        },
+        plugins: {
+            legend: { 
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: {
+                    padding: 10,
+                    boxWidth: 15
+                }
+            },
+            datalabels: {
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 12
+                },
+                formatter: (value) => value > 0 ? value : ''
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.label}: ${context.parsed}`
+                }
+            }
+        }
+    };
+    
+    charts.unaffiliatedSize = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: filteredLabels,
+            datasets: [{
+                data: filteredData,
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderUnaffiliatedColorBySubtypeChart() {
+    const ctx = document.getElementById('unaffiliatedColorBySubtypeChart');
+    if (!ctx) return; // Chart element doesn't exist yet
+    
+    const colorBySubtype = getUnaffiliatedColorBySubtype();
+    const subtypeLabels = ['Small', 'Medium', 'Large', 'Non-Sphere', 'Medallion', 'Special'];
+    const subtypeKeys = ['small', 'medium', 'large', 'nonSphere', 'medallion', 'special'];
+    
+    // Filter out subtypes with no data and calculate totals for sorting
+    const activeSubtypes = [];
+    subtypeKeys.forEach((key, index) => {
+        const colors = colorBySubtype[key];
+        const total = Object.values(colors).reduce((sum, count) => sum + count, 0);
+        if (total > 0) {
+            activeSubtypes.push({
+                key,
+                label: subtypeLabels[index],
+                total
+            });
+        }
+    });
+    
+    // Sort by total count (largest to smallest)
+    activeSubtypes.sort((a, b) => b.total - a.total);
+    
+    const sortedKeys = activeSubtypes.map(item => item.key);
+    const sortedLabels = activeSubtypes.map(item => item.label);
+    
+    if (activeSubtypes.length === 0) {
+        // No unaffiliated beads, hide the chart
+        if (charts.unaffiliatedColorBySubtype) charts.unaffiliatedColorBySubtype.destroy();
+        return;
+    }
+    
+    // Initialize filters if not yet initialized
+    if (filters.unaffiliatedColorBySubtype.size === 0) {
+        const shapes = activeSubtypes.map(item => ({ key: item.key, label: item.label }));
+        initializeShapeFilters(shapes);
+    }
+    
+    // Apply filters
+    const filteredIndices = sortedKeys
+        .map((key, index) => ({ key, label: sortedLabels[index], index }))
+        .filter(item => filters.unaffiliatedColorBySubtype.has(item.key));
+    
+    // If no shapes selected, show empty chart
+    if (filteredIndices.length === 0) {
+        if (charts.unaffiliatedColorBySubtype) charts.unaffiliatedColorBySubtype.destroy();
+        return;
+    }
+    
+    const filteredSubtypes = filteredIndices.map(item => item.key);
+    const filteredLabels = filteredIndices.map(item => item.label);
+    
+    // Get all unique colors across all filtered subtypes
+    const allColors = new Set();
+    filteredSubtypes.forEach(subtype => {
+        Object.keys(colorBySubtype[subtype]).forEach(color => allColors.add(color));
+    });
+    
+    // Create datasets for each color
+    const datasets = Array.from(allColors).map(color => {
+        const bgColor = BEAD_COLORS[color] || '#999';
+        return {
+            label: color.charAt(0).toUpperCase() + color.slice(1),
+            data: filteredSubtypes.map(subtype => colorBySubtype[subtype][color] || 0),
+            backgroundColor: bgColor,
+            borderColor: getBorderColor(bgColor),
+            borderWidth: 1
+        };
+    });
+    
+    if (charts.unaffiliatedColorBySubtype) charts.unaffiliatedColorBySubtype.destroy();
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(filteredLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: { left: 10, right: 10, top: 10, bottom: 10 }
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: { padding: 8, boxWidth: 12, font: { size: 10 } }
+            },
+            datalabels: {
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : '',
+                anchor: 'center',
+                align: 'center'
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => `${context.dataset.label}: ${context.parsed.x}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Count' },
+                ticks: { padding: 5 }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
+            }
+        }
+    };
+    
+    charts.unaffiliatedColorBySubtype = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredLabels,
+            datasets: datasets
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels, minBarLengthPlugin]
+    });
+}
+
+function renderUnaffiliatedWinners() {
+    const winners = getUnaffiliatedWinners();
+    
+    // Most Common Shape
+    const shapeEl = document.getElementById('unaffiliatedWinnerShape');
+    const shapeDetailsEl = document.getElementById('unaffiliatedWinnerShapeDetails');
+    if (shapeEl && winners.mostCommon.shape) {
+        shapeEl.textContent = winners.mostCommon.shape;
+        shapeDetailsEl.textContent = `${winners.mostCommon.count.toLocaleString()} beads`;
+    }
+    
+    // Most Colorful Shape
+    const colorfulEl = document.getElementById('unaffiliatedWinnerColor');
+    const colorfulDetailsEl = document.getElementById('unaffiliatedWinnerColorDetails');
+    if (colorfulEl && winners.mostColorful.shape) {
+        colorfulEl.textContent = winners.mostColorful.shape;
+        colorfulDetailsEl.textContent = `${winners.mostColorful.colorCount} colors`;
+    }
+}
+
+function renderParadeComparisonCharts() {
+    const { itemsData, weightData } = getParadeComparisonData();
+    const paradeCount = Object.keys(itemsData).length;
+    const colors = generateColorPattern(paradeCount);
+    
+    // Total Items Chart
+    const itemsCtx = document.getElementById('paradeItemsChart');
+    if (charts.paradeItems) charts.paradeItems.destroy();
+    
+    const itemsBaseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 11
+                },
+                formatter: (value) => value
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Count' },
+                ticks: {
+                    padding: 5,
+                    stepSize: 1,
+                    precision: 0
+                }
+            },
+            y: {
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.paradeItems = new Chart(itemsCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(itemsData),
+            datasets: [{
+                label: 'Total Items',
+                data: Object.values(itemsData),
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels, minBarLengthPlugin]
+    });
+
+    // Total Weight Chart
+    const weightCtx = document.getElementById('paradeWeightChart');
+    if (charts.paradeWeight) charts.paradeWeight.destroy();
+    
+    const weightBaseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                left: 10,
+                right: 50,
+                top: 10,
+                bottom: 10
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: {
+                    weight: 'bold',
+                    size: 11
+                },
+                formatter: (value) => value + 'g'
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true, 
+                title: { display: true, text: 'Weight (grams)' },
+                ticks: {
+                    padding: 5
+                }
+            },
+            y: {
+                ticks: {
+                    padding: 10,
+                    autoSkip: false,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+    
+    charts.paradeWeight = new Chart(weightCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(weightData),
+            datasets: [{
+                label: 'Total Weight',
+                data: Object.values(weightData),
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(weightBaseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+// ========================================
+// Beads by Parade Visualizations
+// ========================================
+
+function renderBeadCountByParadeChart() {
+    const ctx = document.getElementById('beadCountByParadeChart');
+    if (!ctx) return;
+    
+    const data = getBeadCountByParade();
+    const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(([parade]) => parade);
+    const values = sorted.map(([, count]) => count);
+    const colors = generateColorPattern(labels.length);
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    if (charts.beadCountByParade) charts.beadCountByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: { left: 10, right: 60, top: 10, bottom: 10 }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: { weight: 'bold', size: 11 },
+                formatter: (value) => value.toLocaleString()
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true,
+                title: { display: true, text: 'Bead Count' },
+                ticks: { padding: 5 }
+            },
+            y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
+            }
+        }
+    };
+    
+    charts.beadCountByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Bead Count',
+                data: values,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderBeadWeightByParadeChart() {
+    const ctx = document.getElementById('beadWeightByParadeChart');
+    if (!ctx) return;
+    
+    const dataInGrams = getBeadWeightByParade();
+    const sorted = Object.entries(dataInGrams).sort((a, b) => b[1] - a[1]);
+    const labels = sorted.map(([parade]) => parade);
+    const valuesInGrams = sorted.map(([, weight]) => weight);
+    
+    // Convert values based on weight unit
+    const values = weightUnit === 'pounds'
+        ? valuesInGrams.map(g => gramsToLbs(g))
+        : valuesInGrams;
+    
+    const colors = generateColorPattern(labels.length);
+    
+    // Determine unit label and formatter
+    const unitLabel = weightUnit === 'pounds' ? 'lbs' : 'g';
+    const unitText = weightUnit === 'pounds' ? 'Weight (pounds)' : 'Weight (grams)';
+    const formatter = weightUnit === 'pounds' 
+        ? (value) => value.toFixed(2) + ' lbs'
+        : (value) => Math.round(value).toLocaleString() + 'g';
+    
+    // Calculate and set dynamic height
+    const height = calculateChartHeight(labels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    if (charts.beadWeightByParade) charts.beadWeightByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: { left: 10, right: 60, top: 10, bottom: 10 }
+        },
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'right',
+                color: '#2D1B4E',
+                font: { weight: 'bold', size: 11 },
+                formatter: formatter
+            }
+        },
+        scales: {
+            x: { 
+                beginAtZero: true,
+                title: { display: true, text: unitText },
+                ticks: { 
+                    padding: 5,
+                    callback: function(value) {
+                        return weightUnit === 'pounds' ? value.toFixed(2) : Math.round(value);
+                    }
+                }
+            },
+            y: {
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
+            }
+        }
+    };
+    
+    charts.beadWeightByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: `Bead Weight (${unitLabel})`,
+                data: values,
+                backgroundColor: colors,
+                borderColor: colors,
+                borderWidth: 2
+            }]
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels]
+    });
+}
+
+function renderColorDistributionByParadeChart() {
+    const ctx = document.getElementById('colorDistributionByParadeChart');
+    if (!ctx) return;
+    
+    const distributionData = getColorDistributionByParade();
+    
+    // Sort parades by total count
+    const paradesSorted = Object.entries(distributionData)
+        .map(([parade, colors]) => ({
+            parade,
+            total: Object.values(colors).reduce((sum, count) => sum + count, 0),
+            colors
+        }))
+        .sort((a, b) => b.total - a.total);
+    
+    // Initialize filters if not yet initialized
+    if (filters.colorDistributionByParade.size === 0) {
+        const allParades = paradesSorted.map(p => p.parade);
+        initializeParadeFilters('colorDistributionByParade', allParades);
+    }
+    
+    // Apply filters
+    const filteredParades = paradesSorted.filter(p => filters.colorDistributionByParade.has(p.parade));
+    
+    // If no parades selected, show empty chart
+    if (filteredParades.length === 0) {
+        if (charts.colorDistributionByParade) charts.colorDistributionByParade.destroy();
+        return;
+    }
+    
+    const paradeLabels = filteredParades.map(p => p.parade);
+    
+    // Get all unique colors across all parades
+    const allColors = new Set();
+    filteredParades.forEach(p => {
+        Object.keys(p.colors).forEach(color => allColors.add(color));
+    });
+    
+    // Create datasets for each color
+    const datasets = Array.from(allColors).map(color => {
+        const bgColor = BEAD_COLORS[color] || '#999';
+        return {
+            label: color.charAt(0).toUpperCase() + color.slice(1),
+            data: filteredParades.map(p => p.colors[color] || 0),
+            backgroundColor: bgColor,
+            borderColor: getBorderColor(bgColor),
+            borderWidth: 1
+        };
+    });
+    
+    // Calculate and set dynamic height based on filtered data
+    const height = calculateChartHeight(paradeLabels.length, { 
+        orientation: 'horizontal',
+        pixelsPerBar: isMobileView() ? 28 : 30 
+    });
+    setCanvasHeight(ctx, height);
+    
+    if (charts.colorDistributionByParade) charts.colorDistributionByParade.destroy();
+    
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: { left: 10, right: 10, top: 10, bottom: 10 }
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: isMobileView() ? 'bottom' : 'right',
+                labels: { padding: 8, boxWidth: 12, font: { size: 10 } }
+            },
+            datalabels: {
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : '',
+                anchor: 'center',
+                align: 'center'
+            },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.x;
+                        return value > 0 ? `${label}: ${value}` : '';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                stacked: true,
+                beginAtZero: true,
+                title: { display: true, text: 'Bead Count' },
+                ticks: { padding: 5 }
+            },
+            y: {
+                stacked: true,
+                barPercentage: 0.85,
+                categoryPercentage: 0.90,
+                ticks: { padding: 10, autoSkip: false, font: { size: 11 } }
+            }
+        }
+    };
+    
+    charts.colorDistributionByParade = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: paradeLabels,
+            datasets: datasets
+        },
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels, minBarLengthPlugin]
+    });
+}
+
+function renderParadeWinners() {
+    const winners = getParadeWinners();
+    
+    // Most Generous
+    const mostGenerousEl = document.getElementById('paradeWinnerGenerous');
+    const mostGenerousDetailsEl = document.getElementById('paradeWinnerGenerousDetails');
+    if (mostGenerousEl && winners.mostGenerous.name) {
+        mostGenerousEl.textContent = winners.mostGenerous.name;
+        mostGenerousDetailsEl.textContent = `${winners.mostGenerous.count.toLocaleString()} beads`;
+    }
+    
+    // Heaviest
+    const heaviestEl = document.getElementById('paradeWinnerHeaviest');
+    const heaviestDetailsEl = document.getElementById('paradeWinnerHeaviestDetails');
+    if (heaviestEl && winners.heaviest.name) {
+        heaviestEl.textContent = winners.heaviest.name;
+        heaviestDetailsEl.textContent = formatWeight(winners.heaviest.weight);
+    }
+    
+    // Most Colorful
+    const colorfulEl = document.getElementById('paradeWinnerColorful');
+    const colorfulDetailsEl = document.getElementById('paradeWinnerColorfulDetails');
+    if (colorfulEl && winners.mostColorful.name) {
+        colorfulEl.textContent = winners.mostColorful.name;
+        colorfulDetailsEl.textContent = `${winners.mostColorful.colorCount} colors`;
+    }
+    
+    // Medallion King
+    const medallionEl = document.getElementById('paradeWinnerMedallion');
+    const medallionDetailsEl = document.getElementById('paradeWinnerMedallionDetails');
+    if (medallionEl && winners.medallionKing.name) {
+        medallionEl.textContent = winners.medallionKing.name;
+        medallionDetailsEl.textContent = `${winners.medallionKing.count.toLocaleString()} medallions`;
+    }
+    
+    // Most Doubloons
+    const doubloonsEl = document.getElementById('paradeWinnerDoubloons');
+    const doubloonsDetailsEl = document.getElementById('paradeWinnerDoubloonsDetails');
+    if (doubloonsEl && winners.mostDoubloons.name) {
+        doubloonsEl.textContent = winners.mostDoubloons.name;
+        doubloonsDetailsEl.textContent = `${winners.mostDoubloons.count.toLocaleString()} doubloons`;
+    }
+    
+    // Most Stuffed Animals
+    const stuffedAnimalsEl = document.getElementById('paradeWinnerStuffedAnimals');
+    const stuffedAnimalsDetailsEl = document.getElementById('paradeWinnerStuffedAnimalsDetails');
+    if (stuffedAnimalsEl && winners.mostStuffedAnimals.name) {
+        stuffedAnimalsEl.textContent = winners.mostStuffedAnimals.name;
+        stuffedAnimalsDetailsEl.textContent = `${winners.mostStuffedAnimals.count.toLocaleString()} stuffed animals`;
+    }
+    
+    // Most Throws
+    const throwsEl = document.getElementById('paradeWinnerThrows');
+    const throwsDetailsEl = document.getElementById('paradeWinnerThrowsDetails');
+    if (throwsEl && winners.mostThrows.name) {
+        throwsEl.textContent = winners.mostThrows.name;
+        throwsDetailsEl.textContent = `${winners.mostThrows.count.toLocaleString()} throws`;
+    }
+}
+
+// ========================================
+// Table Rendering
+// ========================================
+
+function renderTables() {
+    updateWeightHeaders();
+    renderBeadsTable();
+    renderThrowsTable();
+}
+
+function updateWeightHeaders() {
+    const headerEl = document.getElementById('weightColumnHeader');
+    if (headerEl) {
+        headerEl.textContent = weightUnit === 'pounds' 
+            ? 'Total Weight (lbs)' 
+            : 'Total Weight (g)';
+    }
+}
+
+function renderBeadsTable() {
+    const tbody = document.querySelector('#beadsTable tbody');
+    const beadData = getBeadData();
+    
+    tbody.innerHTML = Object.entries(beadData)
+        .sort((a, b) => b[1].count - a[1].count)
+        .map(([color, data]) => `
+            <tr>
+                <td>
+                    <span class="color-indicator" style="background-color: ${BEAD_COLORS[color] || '#999'}"></span>
+                    ${color.charAt(0).toUpperCase() + color.slice(1)}
+                </td>
+                <td>${data.count.toLocaleString()}</td>
+                <td>${formatWeight(data.weight)}</td>
+                <td>${data.medallion.count.toLocaleString()}</td>
+                <td>${data.regular.count.toLocaleString()}</td>
+            </tr>
+        `).join('');
+}
+
+function renderThrowsTable() {
+    const tbody = document.querySelector('#throwsTable tbody');
+    const itemsData = getItemsData();
+    
+    tbody.innerHTML = Object.entries(itemsData)
+        .sort((a, b) => b[1] - a[1])
+        .map(([item, count]) => `
+            <tr>
+                <td>${item.charAt(0).toUpperCase() + item.slice(1)}</td>
+                <td>${count.toLocaleString()}</td>
+            </tr>
+        `).join('');
+}
+
+function sortTable(header) {
+    const table = header.closest('table');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const column = header.dataset.sort;
+    const headerIndex = Array.from(header.parentElement.children).indexOf(header);
+    
+    const isAscending = header.classList.contains('asc');
+    
+    // Remove sorting classes from all headers
+    table.querySelectorAll('th').forEach(th => {
+        th.classList.remove('asc', 'desc');
+    });
+    
+    // Sort rows
+    rows.sort((a, b) => {
+        const aValue = a.children[headerIndex].textContent.trim();
+        const bValue = b.children[headerIndex].textContent.trim();
+        
+        // Check if numeric
+        const aNum = parseFloat(aValue.replace(/,/g, ''));
+        const bNum = parseFloat(bValue.replace(/,/g, ''));
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return isAscending ? bNum - aNum : aNum - bNum;
+        } else {
+            return isAscending 
+                ? bValue.localeCompare(aValue)
+                : aValue.localeCompare(bValue);
+        }
+    });
+    
+    // Add sorting class
+    header.classList.add(isAscending ? 'desc' : 'asc');
+    
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+}
