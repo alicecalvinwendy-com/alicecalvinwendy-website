@@ -165,14 +165,31 @@
         <!-- Unaffiliated Beads Breakdown Section -->
         <section class="unaffiliated-section">
             <h2>Unaffiliated Beads Breakdown</h2>
-            <p class="section-description">Size distribution of non-branded beads caught during parades</p>
+            <p class="section-description">Shape distribution of non-branded beads caught during parades</p>
             <div class="charts-grid unaffiliated-grid">
                 <div class="chart-container">
-                    <h3>Unaffiliated Beads by Size</h3>
+                    <h3>Unaffiliated Beads by Shape</h3>
                     <canvas id="unaffiliatedSizeChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3>Color Breakdown by Subtype</h3>
+                    <h3>🏆 Winners</h3>
+                    <div class="winners-display unaffiliated-winners">
+                        <div class="winner-card">
+                            <div class="winner-icon">👑</div>
+                            <div class="winner-label">Most Common</div>
+                            <div class="winner-value" id="unaffiliatedWinnerShape">-</div>
+                            <div class="winner-subtext" id="unaffiliatedWinnerShapeDetails">-</div>
+                        </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">🎨</div>
+                            <div class="winner-label">Most Colorful</div>
+                            <div class="winner-value" id="unaffiliatedWinnerColor">-</div>
+                            <div class="winner-subtext" id="unaffiliatedWinnerColorDetails">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Color Breakdown by Shape</h3>
                     <canvas id="unaffiliatedColorBySubtypeChart"></canvas>
                 </div>
             </div>

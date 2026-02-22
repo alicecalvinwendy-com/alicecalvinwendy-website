@@ -560,6 +560,47 @@ function getUnaffiliatedColorBySubtype() {
     return data;
 }
 
+// Get unaffiliated winners data
+function getUnaffiliatedWinners() {
+    const sizeData = getUnaffiliatedSizeData();
+    const colorBySubtype = getUnaffiliatedColorBySubtype();
+    
+    // Find most common shape
+    const shapes = ['small', 'medium', 'large', 'nonSphere', 'medallion', 'special'];
+    const shapeLabels = ['Small', 'Medium', 'Large', 'Non-Sphere', 'Medallion', 'Special'];
+    let maxShapeCount = 0;
+    let winnerShape = '';
+    let winnerShapeLabel = '';
+    
+    shapes.forEach((shape, index) => {
+        const count = sizeData[shape] || 0;
+        if (count > maxShapeCount) {
+            maxShapeCount = count;
+            winnerShape = shape;
+            winnerShapeLabel = shapeLabels[index];
+        }
+    });
+    
+    // Find most colorful shape (shape with most different colors)
+    let maxColorCount = 0;
+    let mostColorfulShape = '';
+    let mostColorfulShapeLabel = '';
+    
+    shapes.forEach((shape, index) => {
+        const colorCount = Object.keys(colorBySubtype[shape] || {}).length;
+        if (colorCount > maxColorCount) {
+            maxColorCount = colorCount;
+            mostColorfulShape = shape;
+            mostColorfulShapeLabel = shapeLabels[index];
+        }
+    });
+    
+    return {
+        mostCommon: { shape: winnerShapeLabel, count: maxShapeCount },
+        mostColorful: { shape: mostColorfulShapeLabel, colorCount: maxColorCount }
+    };
+}
+
 function getItemsData() {
     const parades = ['unaffiliated', ...mardiGrasData.parades.map(p => p.keyName)];
 
@@ -770,6 +811,7 @@ function renderAllVisualizations() {
     // Unaffiliated breakdown
     renderUnaffiliatedSizeChart();
     renderUnaffiliatedColorBySubtypeChart();
+    renderUnaffiliatedWinners();
     
     // Other sections
     renderItemsChart();
@@ -1778,6 +1820,26 @@ function renderUnaffiliatedColorBySubtypeChart() {
         },
         options: mergeChartOptions(baseOptions)
     });
+}
+
+function renderUnaffiliatedWinners() {
+    const winners = getUnaffiliatedWinners();
+    
+    // Most Common Shape
+    const shapeEl = document.getElementById('unaffiliatedWinnerShape');
+    const shapeDetailsEl = document.getElementById('unaffiliatedWinnerShapeDetails');
+    if (shapeEl && winners.mostCommon.shape) {
+        shapeEl.textContent = winners.mostCommon.shape;
+        shapeDetailsEl.textContent = `${winners.mostCommon.count.toLocaleString()} beads`;
+    }
+    
+    // Most Colorful Shape
+    const colorfulEl = document.getElementById('unaffiliatedWinnerColor');
+    const colorfulDetailsEl = document.getElementById('unaffiliatedWinnerColorDetails');
+    if (colorfulEl && winners.mostColorful.shape) {
+        colorfulEl.textContent = winners.mostColorful.shape;
+        colorfulDetailsEl.textContent = `${winners.mostColorful.colorCount} colors`;
+    }
 }
 
 function renderParadeComparisonCharts() {
