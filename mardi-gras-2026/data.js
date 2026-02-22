@@ -484,8 +484,8 @@ const mardiGrasData = {
         regular: { weight: 0, count: 0 },
       },
       chaos: {
-        medallion: { weight: 956, count: 35 },
-        regular: { weight: 0, count: 0 },
+        medallion: { weight: 0, count: 0 },
+        regular: { weight: 956, count: 35 },
       },
       babylon: {
         medallion: { weight: 0, count: 0 },
