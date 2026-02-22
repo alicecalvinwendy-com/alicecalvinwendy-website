@@ -1024,9 +1024,35 @@ function getItemsByParadeData() {
 
 function getDoubloonsData() {
     const data = {};
+    
+    // Helper function to convert camelCase to readable format
+    const camelToReadable = (str) => {
+        return str
+            // Insert space before capital letters
+            .replace(/([A-Z])/g, ' $1')
+            // Capitalize first letter
+            .replace(/^./, (match) => match.toUpperCase())
+            .trim();
+    };
+    
+    // Get all doubloon keys from data
+    const allDoubloonKeys = Object.keys(mardiGrasData.doubloons);
+    
+    // Build map of parade keyNames to shortNames
+    const paradeMap = new Map();
     mardiGrasData.parades.forEach(parade => {
-        data[parade.shortName] = mardiGrasData.doubloons[parade.keyName]?.count || 0;
+        paradeMap.set(parade.keyName, parade.shortName);
     });
+    
+    // Process each doubloon category
+    allDoubloonKeys.forEach(key => {
+        const count = mardiGrasData.doubloons[key]?.count || 0;
+        
+        // Use parade shortName if it's a parade, otherwise convert camelCase
+        const label = paradeMap.has(key) ? paradeMap.get(key) : camelToReadable(key);
+        data[label] = count;
+    });
+    
     return data;
 }
 

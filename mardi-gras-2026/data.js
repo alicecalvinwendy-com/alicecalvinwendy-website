@@ -209,7 +209,7 @@ const mardiGrasData = {
       },
       tucks: {
         medallion: { weight: 47, count: 1 },
-        regular: { weight: 307+60, count: 5+1 },
+        regular: { weight: 307 + 60, count: 5 + 1 },
       },
       okeanos: {
         medallion: { weight: 0, count: 0 },
@@ -233,13 +233,13 @@ const mardiGrasData = {
       },
       orpheus: {
         medallion: { weight: 0, count: 0 },
-        regular: { weight: 816+183, count: 9+2 },
+        regular: { weight: 816 + 183, count: 9 + 2 },
       },
     },
     green: {
       unaffiliated: {
-        small: { weight: 987+677, count: 38+47 },
-        medium: { weight: 2160+2435, count: 32+36 },
+        small: { weight: 987 + 677, count: 38 + 47 },
+        medium: { weight: 2160 + 2435, count: 32 + 36 },
         large: { weight: 119, count: 1 },
         nonSphere: { weight: 110, count: 4 },
         other: {
@@ -269,7 +269,7 @@ const mardiGrasData = {
       },
       hermes: {
         medallion: { weight: 0, count: 0 },
-        regular: { weight: 254+713, count: 5+15 },
+        regular: { weight: 254 + 713, count: 5 + 15 },
       },
       detat: {
         medallion: { weight: 0, count: 0 },
@@ -314,10 +314,10 @@ const mardiGrasData = {
     },
     gold: {
       unaffiliated: {
-        small: { weight: 21+1625, count: 1+83 },
+        small: { weight: 21 + 1625, count: 1 + 83 },
         medium: { weight: 5241, count: 78 },
         large: { weight: 522, count: 3 },
-        nonSphere: { weight: 22+99, count: 1+5 },
+        nonSphere: { weight: 22 + 99, count: 1 + 5 },
         other: {
           medallion: { weight: 44, count: 1 },
           special: { weight: 162, count: 3 },
@@ -385,7 +385,7 @@ const mardiGrasData = {
       },
       orpheus: {
         medallion: { weight: 0, count: 0 },
-        regular: { weight: 238+589, count: 2+5 },
+        regular: { weight: 238 + 589, count: 2 + 5 },
       },
     },
     red: {
@@ -445,7 +445,7 @@ const mardiGrasData = {
       },
       midcity: {
         medallion: { weight: 0, count: 0 },
-        regular: { weight: 486, count: 9},
+        regular: { weight: 486, count: 9 },
       },
       thoth: {
         medallion: { weight: 51, count: 2 },
@@ -1133,7 +1133,7 @@ const mardiGrasData = {
       },
       thoth: {
         medallion: { weight: 0, count: 0 },
-        regular: { weight: 0, count: 0 },
+        regular: { weight: 51, count: 1 },
       },
       bacchus: {
         medallion: { weight: 0, count: 0 },
@@ -1227,23 +1227,26 @@ const mardiGrasData = {
   },
 
   doubloons: {
-    unaffiliated: { count: 3 },
-    druids: { count: 4 },
-    alla: { count: 2 },
-    chaos: { count: 5 },
-    babylon: { count: 6 },
-    muses: { count: 8 },
-    hermes: { count: 7 },
-    detat: { count: 3 },
-    morpheus: { count: 4 },
-    iris: { count: 7 },
-    tucks: { count: 6 },
-    okeanos: { count: 5 },
-    midcity: { count: 4 },
-    thoth: { count: 9 },
-    bacchus: { count: 12 },
-    proteus: { count: 8 },
-    orpheus: { count: 11 },
+    unaffiliated: { count: 6 },
+    clydesdale: { count: 1},
+    nolaAngles: { count: 3 },
+    druids: { count: 30 },
+    kreweDeFluers: { count: 2},
+    alla: { count: 0 },
+    chaos: { count: 6 },
+    babylon: { count: 13 },
+    muses: { count: 0 },
+    hermes: { count: 2 },
+    detat: { count: 5 },
+    morpheus: { count: 0 },
+    iris: { count: 8 },
+    tucks: { count: 11 },
+    okeanos: { count: 3 },
+    midcity: { count: 1 },
+    thoth: { count: 12 },
+    bacchus: { count: 6 },
+    proteus: { count: 2 },
+    orpheus: { count: 0 },
   },
 
   throws: {
