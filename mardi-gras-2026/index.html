@@ -63,31 +63,9 @@
             </div>
         </section>
 
-        <!-- Filters -->
-        <section class="filters">
-            <div class="filter-group">
-                <label for="paradeFilter">
-                    <span class="filter-icon">🎪</span>
-                    Filter by Parade:
-                </label>
-                <select id="paradeFilter" class="filter-select">
-                    <option value="all">All Parades</option>
-                </select>
-            </div>
-        </section>
-
         <!-- Beads Section -->
         <section class="beads-section">
-            <h2>Beads Analysis</h2>
-            <div class="filter-group bead-filter">
-                <label for="beadColorFilter">
-                    <span class="filter-icon">🎨</span>
-                    Filter by Color:
-                </label>
-                <select id="beadColorFilter" class="filter-select">
-                    <option value="all">All Colors</option>
-                </select>
-            </div>
+            <h2>Beads by Color Analysis</h2>
             
             <div class="charts-grid beads-grid">
                 <div class="chart-container">
@@ -102,26 +80,99 @@
                     <h3>Bead Distribution (%)</h3>
                     <canvas id="beadPercentageChart"></canvas>
                 </div>
+                <div class="chart-container">
+                    <h3>🏆 Winners</h3>
+                    <div class="winners-display">
+                        <div class="winner-card">
+                            <div class="winner-icon">👑</div>
+                            <div class="winner-label">Most Beads</div>
+                            <div class="winner-value" id="winnerCount">-</div>
+                            <div class="winner-subtext" id="winnerCountDetails">-</div>
+                        </div>
+                        <div class="winner-card">
+                            <div class="winner-icon">⚖️</div>
+                            <div class="winner-label">Heaviest</div>
+                            <div class="winner-value" id="winnerWeight">-</div>
+                            <div class="winner-subtext" id="winnerWeightDetails">-</div>
+                        </div>
+                    </div>
+                </div>
                 <div class="chart-container chart-full-width">
-                    <h3>Bead Types by Parade</h3>
-                    <canvas id="beadTypesByParadeChart"></canvas>
+                    <h3>Medallion vs Regular by Color</h3>
+                    <canvas id="medallionVsRegularColorChart"></canvas>
                 </div>
             </div>
         </section>
 
-        <!-- Medallion vs Regular Beads Section -->
-        <section class="medallion-section">
-            <h2>Medallion vs Regular Beads</h2>
-            <p class="section-description">Breakdown showing medallion beads (with logos/designs) versus regular beads</p>
-            <div class="charts-grid medallion-grid">
-                <div class="chart-container">
-                    <h3>Medallion vs Regular by Color</h3>
-                    <canvas id="medallionVsRegularColorChart"></canvas>
+        <!-- Beads by Parade Section -->
+        <section class="parade-beads-section">
+            <h2>Beads by Parade</h2>
+            <p class="section-description">Analysis of bead catches organized by parade</p>
+            
+            <div class="charts-grid parade-beads-grid">
+                <div class="chart-container chart-full-width">
+                    <h3>Bead Types by Parade</h3>
+                    <canvas id="beadTypesByParadeChart"></canvas>
                 </div>
                 <div class="chart-container chart-full-width">
                     <h3>Medallion vs Regular by Parade</h3>
                     <canvas id="medallionVsRegularParadeChart"></canvas>
                 </div>
+                <div class="chart-container">
+                    <h3>Total Bead Count by Parade</h3>
+                    <canvas id="beadCountByParadeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Total Bead Weight by Parade</h3>
+                    <canvas id="beadWeightByParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Bead Color Distribution by Parade</h3>
+                    <canvas id="colorDistributionByParadeChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>Doubloons by Parade</h3>
+                    <canvas id="doubloonsChart"></canvas>
+                </div>
+                <div class="chart-container chart-full-width">
+                    <h3>🏆 Parade Winners</h3>
+                    <div class="winners-display parade-winners">
+                        <div class="winner-card parade-winner-card">
+                            <div class="winner-icon">👑</div>
+                            <div class="winner-label">Most Generous</div>
+                            <div class="winner-value" id="paradeWinnerGenerous">-</div>
+                            <div class="winner-subtext" id="paradeWinnerGenerousDetails">-</div>
+                        </div>
+                        <div class="winner-card parade-winner-card">
+                            <div class="winner-icon">⚖️</div>
+                            <div class="winner-label">Heaviest Haul</div>
+                            <div class="winner-value" id="paradeWinnerHeaviest">-</div>
+                            <div class="winner-subtext" id="paradeWinnerHeaviestDetails">-</div>
+                        </div>
+                        <div class="winner-card parade-winner-card">
+                            <div class="winner-icon">🎨</div>
+                            <div class="winner-label">Most Colorful</div>
+                            <div class="winner-value" id="paradeWinnerColorful">-</div>
+                            <div class="winner-subtext" id="paradeWinnerColorfulDetails">-</div>
+                        </div>
+                        <div class="winner-card parade-winner-card">
+                            <div class="winner-icon">🥇</div>
+                            <div class="winner-label">Medallion King</div>
+                            <div class="winner-value" id="paradeWinnerMedallion">-</div>
+                            <div class="winner-subtext" id="paradeWinnerMedallionDetails">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Unaffiliated Beads Breakdown Section -->
+        <section class="unaffiliated-section">
+            <h2>Unaffiliated Beads Breakdown</h2>
+            <p class="section-description">Size distribution of non-branded beads caught during parades</p>
+            <div class="chart-container chart-medium">
+                <h3>Unaffiliated Beads by Size</h3>
+                <canvas id="unaffiliatedSizeChart"></canvas>
             </div>
         </section>
 
@@ -146,29 +197,6 @@
             <p class="section-description">Rare, hand-decorated throws from specific parades</p>
             <div class="chart-container chart-wide">
                 <canvas id="specialsChart"></canvas>
-            </div>
-        </section>
-
-        <!-- Doubloons -->
-        <section class="doubloons-section">
-            <h2>Doubloons by Parade</h2>
-            <div class="chart-container chart-wide">
-                <canvas id="doubloonsChart"></canvas>
-            </div>
-        </section>
-
-        <!-- Parade Comparison (only shown when All Parades selected) -->
-        <section class="comparison-section" id="comparisonSection">
-            <h2>Parade Comparison</h2>
-            <div class="charts-grid comparison-grid">
-                <div class="chart-container">
-                    <h3>Total Items by Parade</h3>
-                    <canvas id="paradeItemsChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h3>Total Bead Weight by Parade (grams)</h3>
-                    <canvas id="paradeWeightChart"></canvas>
-                </div>
             </div>
         </section>
 
