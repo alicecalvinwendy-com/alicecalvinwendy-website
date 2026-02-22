@@ -287,6 +287,13 @@ section h3 {
     overflow: visible;
 }
 
+/* Override height for containers with winners display */
+.chart-container:has(.winners-display) {
+    height: auto;
+    max-height: none;
+    min-height: 350px;
+}
+
 .chart-container canvas {
     flex: 1;
     max-height: 100%;
@@ -392,7 +399,6 @@ section h3 {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: var(--spacing-md);
     padding: var(--spacing-md);
-    height: 100%;
 }
 
 .winner-card {
@@ -445,6 +451,7 @@ section h3 {
     .winners-display {
         grid-template-columns: 1fr;
         gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
     }
     
     .parade-winners {
@@ -452,12 +459,27 @@ section h3 {
         gap: 0.5rem;
     }
     
+    .winner-card {
+        padding: var(--spacing-md);
+    }
+    
     .winner-icon {
-        font-size: 2.5rem;
+        font-size: 2rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .winner-label {
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
     }
     
     .winner-value {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .winner-subtext {
+        font-size: 0.75rem;
     }
 }
 
