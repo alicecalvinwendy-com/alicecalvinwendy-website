@@ -1,5 +1,6 @@
 // ========================================
 // Mardi Gras 2026 - Throws Tracker App
+// Updated: 2026-02-21 21:30
 // ========================================
 // Data is loaded from data.js which is included before this script.
 // Edit data.js to update parade and throws information.
@@ -103,6 +104,72 @@ function getBorderColor(backgroundColor) {
     return backgroundColor;
 }
 
+// Helper function to calculate relative luminance of a color
+function getLuminance(color) {
+    // Convert hex or hsl to RGB
+    let r, g, b;
+    
+    if (color.startsWith('#')) {
+        // Hex color
+        const hex = color.replace('#', '');
+        r = parseInt(hex.substr(0, 2), 16) / 255;
+        g = parseInt(hex.substr(2, 2), 16) / 255;
+        b = parseInt(hex.substr(4, 2), 16) / 255;
+    } else if (color.startsWith('hsl')) {
+        // HSL color - convert to RGB
+        const hslMatch = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+        if (hslMatch) {
+            const h = parseInt(hslMatch[1]) / 360;
+            const s = parseInt(hslMatch[2]) / 100;
+            const l = parseInt(hslMatch[3]) / 100;
+            
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        } else {
+            return 0.5; // Fallback
+        }
+    } else if (color.startsWith('rgb')) {
+        // RGB color
+        const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (rgbMatch) {
+            r = parseInt(rgbMatch[1]) / 255;
+            g = parseInt(rgbMatch[2]) / 255;
+            b = parseInt(rgbMatch[3]) / 255;
+        } else {
+            return 0.5; // Fallback
+        }
+    } else {
+        return 0.5; // Fallback for unknown formats
+    }
+    
+    // Apply gamma correction
+    r = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+    g = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+    b = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+    
+    // Calculate relative luminance
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+// Helper function to get contrasting text color (black or white)
+function getContrastColor(backgroundColor) {
+    const luminance = getLuminance(backgroundColor);
+    // Use white text for dark backgrounds (luminance < 0.5), black for light backgrounds
+    return luminance > 0.5 ? '#2D1B4E' : '#FFFFFF';
+}
+
 // Helper function to detect mobile screens
 function isMobileView() {
     return window.innerWidth <= 480;
@@ -193,6 +260,49 @@ function mergeChartOptions(baseOptions) {
     
     return deepMerge(baseOptions, mobileOptions);
 }
+
+// ========================================
+// Chart.js Plugins
+// ========================================
+
+// Plugin to enforce minimum bar length for non-zero values in stacked horizontal bar charts
+const minBarLengthPlugin = {
+    id: 'minBarLength',
+    beforeDatasetsDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        const xScale = scales.x;
+        const yScale = scales.y;
+        
+        // Only apply to horizontal bar charts with stacked data
+        if (chart.config.type !== 'bar' || chart.config.options.indexAxis !== 'y') {
+            return;
+        }
+        
+        // Minimum visual width in pixels for non-zero values
+        const MIN_BAR_WIDTH = 25;
+        
+        // Iterate through each dataset
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta.visible) return;
+            
+            meta.data.forEach((bar, index) => {
+                const value = dataset.data[index];
+                
+                // Only apply to non-zero values
+                if (value <= 0) return;
+                
+                // Calculate the actual bar width
+                const barWidth = bar.width;
+                
+                // If bar is too small, artificially extend it
+                if (barWidth < MIN_BAR_WIDTH && barWidth > 0) {
+                    bar.width = MIN_BAR_WIDTH;
+                }
+            });
+        });
+    }
+};
 
 // ========================================
 // Initialization
@@ -1186,7 +1296,10 @@ function renderBeadPercentageChart(beadData) {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                    return getContrastColor(bgColor);
+                },
                 font: {
                     weight: 'bold',
                     size: isMobileView() ? 9 : 11
@@ -1377,7 +1490,11 @@ function renderItemsChart() {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: (context) => {
+                    // Get the background color of the current segment
+                    const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                    return getContrastColor(bgColor);
+                },
                 font: {
                     weight: 'bold',
                     size: 12
@@ -1759,7 +1876,13 @@ function renderMedallionVsRegularByColorChart() {
                 }
             },
             datalabels: {
-                color: '#2D1B4E',
+                color: (context) => {
+                    // For stacked bars, get the color from the dataset's backgroundColor array
+                    const bgColor = Array.isArray(context.dataset.backgroundColor)
+                        ? context.dataset.backgroundColor[context.dataIndex]
+                        : context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
                 font: {
                     weight: 'bold',
                     size: 11
@@ -1847,12 +1970,17 @@ function renderMedallionVsRegularByParadeChart() {
                 }
             },
             datalabels: {
-                color: '#2D1B4E',
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
                 font: {
                     weight: 'bold',
                     size: 10
                 },
-                formatter: (value) => value > 0 ? value : ''
+                formatter: (value) => value > 0 ? value : '',
+                anchor: 'center',
+                align: 'center'
             },
             tooltip: {
                 callbacks: {
@@ -1965,7 +2093,10 @@ function renderUnaffiliatedSizeChart() {
                 }
             },
             datalabels: {
-                color: '#fff',
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                    return getContrastColor(bgColor);
+                },
                 font: {
                     weight: 'bold',
                     size: 12
@@ -2053,7 +2184,19 @@ function renderUnaffiliatedColorBySubtypeChart() {
                 position: isMobileView() ? 'bottom' : 'right',
                 labels: { padding: 8, boxWidth: 12, font: { size: 10 } }
             },
-            datalabels: { display: false },
+            datalabels: {
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
+                font: {
+                    weight: 'bold',
+                    size: 10
+                },
+                formatter: (value) => value > 0 ? value : '',
+                anchor: 'center',
+                align: 'center'
+            },
             tooltip: {
                 callbacks: {
                     label: (context) => `${context.dataset.label}: ${context.parsed.x}`
@@ -2080,7 +2223,8 @@ function renderUnaffiliatedColorBySubtypeChart() {
             labels: activeLabels,
             datasets: datasets
         },
-        options: mergeChartOptions(baseOptions)
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels, minBarLengthPlugin]
     });
 }
 
@@ -2172,8 +2316,8 @@ function renderParadeComparisonCharts() {
                 borderWidth: 2
             }]
         },
-        options: mergeChartOptions(itemsBaseOptions),
-        plugins: [ChartDataLabels]
+        options: mergeChartOptions(baseOptions),
+        plugins: [ChartDataLabels, minBarLengthPlugin]
     });
 
     // Total Weight Chart
@@ -2431,7 +2575,10 @@ function renderColorDistributionByParadeChart() {
                 labels: { padding: 8, boxWidth: 12, font: { size: 10 } }
             },
             datalabels: {
-                color: '#fff',
+                color: (context) => {
+                    const bgColor = context.dataset.backgroundColor;
+                    return getContrastColor(bgColor);
+                },
                 font: {
                     weight: 'bold',
                     size: 10
@@ -2471,7 +2618,7 @@ function renderColorDistributionByParadeChart() {
             datasets: datasets
         },
         options: mergeChartOptions(baseOptions),
-        plugins: [ChartDataLabels]
+        plugins: [ChartDataLabels, minBarLengthPlugin]
     });
 }
 
